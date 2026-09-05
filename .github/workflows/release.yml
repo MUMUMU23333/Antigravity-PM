@@ -21,10 +21,10 @@ jobs:
       - name: 📥 检出仓库代码
         uses: actions/checkout@v4
 
-      - name: ⚙️ 配置 Node.js 运行环境 (v20)
+      - name: ⚙️ 配置 Node.js 运行环境 (v22 LTS)
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: 'npm'
           cache-dependency-path: Pure/package.json
 
