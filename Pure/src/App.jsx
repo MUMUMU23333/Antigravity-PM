@@ -1771,7 +1771,7 @@ export default function App() {
       display: 'flex',
       flexDirection: 'row',
       overflow: 'hidden',
-      userSelect: 'none'
+      userSelect: 'text'
     }}>
       <style>{`
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -2088,7 +2088,7 @@ export default function App() {
           cursor: grab;
           transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
           position: relative;
-          user-select: none;
+          user-select: text;
         }
         .strategy-card:hover,
         .project-card:hover {
@@ -2333,7 +2333,7 @@ export default function App() {
         }
         .sortable-th {
           cursor: pointer;
-          user-select: none;
+          user-select: text;
         }
         .sortable-th:hover {
           color: #f1f5f9;
@@ -4256,7 +4256,7 @@ export default function App() {
                   </h3>
                   {/* 全选与批量操作栏 */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(0,0,0,0.3)', padding: '3px 10px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.08)' }}>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11.5px', color: '#cbd5e1', cursor: 'pointer', userSelect: 'none' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11.5px', color: '#cbd5e1', cursor: 'pointer', userSelect: 'text' }}>
                       <input
                         type="checkbox"
                         checked={expertTeamsList.length > 0 && selectedTeamIds.size === expertTeamsList.length}
@@ -4608,7 +4608,7 @@ export default function App() {
                   </h3>
                   {/* 全选与批量操作栏 */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(0,0,0,0.3)', padding: '3px 10px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.08)' }}>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11.5px', color: '#cbd5e1', cursor: 'pointer', userSelect: 'none' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11.5px', color: '#cbd5e1', cursor: 'pointer', userSelect: 'text' }}>
                       <input
                         type="checkbox"
                         checked={skillsList.length > 0 && selectedSkillIds.size === skillsList.length}

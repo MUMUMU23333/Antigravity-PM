@@ -334,6 +334,72 @@ function createWindow() {
     console.error('Failed to setup Chinese menu:', e);
   }
 
+    // 全局原生右键菜单：支持任意文字自由复制、粘贴、剪切与全选
+  mainWindow.webContents.on('context-menu', (event, params) => {
+    const { Menu, MenuItem } = require('electron');
+    const menu = new Menu();
+
+    // 1. 如果有选中文本，提供复制
+    if (params.selectionText && params.selectionText.trim().length > 0) {
+      menu.append(new MenuItem({
+        label: '复制(&C)',
+        role: 'copy',
+        accelerator: 'CmdOrCtrl+C'
+      }));
+      menu.append(new MenuItem({ type: 'separator' }));
+    }
+
+    // 2. 如果在可编辑区域（输入框/文本域），提供剪切、粘贴、撤销与全选
+    if (params.isEditable) {
+      menu.append(new MenuItem({
+        label: '剪切(&T)',
+        role: 'cut',
+        accelerator: 'CmdOrCtrl+X'
+      }));
+      menu.append(new MenuItem({
+        label: '粘贴(&P)',
+        role: 'paste',
+        accelerator: 'CmdOrCtrl+V'
+      }));
+      menu.append(new MenuItem({ type: 'separator' }));
+      menu.append(new MenuItem({
+        label: '撤销(&Z)',
+        role: 'undo',
+        accelerator: 'CmdOrCtrl+Z'
+      }));
+      menu.append(new MenuItem({
+        label: '重做(&Y)',
+        role: 'redo',
+        accelerator: 'CmdOrCtrl+Y'
+      }));
+      menu.append(new MenuItem({ type: 'separator' }));
+    }
+
+    // 3. 通用全局全选
+    menu.append(new MenuItem({
+      label: '全选(&A)',
+      role: 'selectAll',
+      accelerator: 'CmdOrCtrl+A'
+    }));
+
+    // 若当前未选中文本且不在输入框中，也可快捷复制页面或刷新
+    if (!params.isEditable && (!params.selectionText || params.selectionText.trim().length === 0)) {
+      menu.append(new MenuItem({
+        label: '复制选区(&C)',
+        role: 'copy',
+        accelerator: 'CmdOrCtrl+C'
+      }));
+      menu.append(new MenuItem({ type: 'separator' }));
+      menu.append(new MenuItem({
+        label: '重新载入界面(&R)',
+        role: 'reload',
+        accelerator: 'CmdOrCtrl+R'
+      }));
+    }
+
+    menu.popup({ window: mainWindow, x: params.x, y: params.y });
+  });
+
   mainWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription, validatedURL) => {
     debugLog(`webContents did-fail-load: ${errorCode} ${errorDescription} URL: ${validatedURL}`);
   });

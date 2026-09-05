@@ -38,7 +38,8 @@ html, body {
   overflow: hidden;
   background-color: var(--bg-app);
   color: var(--text-main);
-  user-select: none;
+  user-select: text;
+  -webkit-user-select: text;
 }
 
 #root {
@@ -109,4 +110,14 @@ button, input, select, textarea {
   backdrop-filter: blur(16px) !important;
   -webkit-backdrop-filter: blur(16px) !important;
   transform: translateZ(0);
+}
+
+/* 全局自由选择与高质感复制高亮 */
+::selection {
+  background: rgba(59, 130, 246, 0.45) !important;
+  color: #ffffff !important;
+}
+::-moz-selection {
+  background: rgba(59, 130, 246, 0.45) !important;
+  color: #ffffff !important;
 }
