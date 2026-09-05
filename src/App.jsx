@@ -1826,16 +1826,26 @@ export default function App() {
           top: 0;
           right: 0;
           bottom: 0;
-          width: 580px;
-          max-width: 90vw;
-          background: rgba(14, 16, 24, 0.95);
-          border-left: 1px solid rgba(255, 255, 255, 0.1);
-          box-shadow: -10px 0 40px rgba(0, 0, 0, 0.7);
+          width: 640px;
+          max-width: 92vw;
+          height: 100vh;
+          background: #0e1018;
+          border-left: 1px solid rgba(255, 255, 255, 0.12);
+          box-shadow: -12px 0 50px rgba(0, 0, 0, 0.85);
           z-index: 1001;
           transform: translateX(100%);
           transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
           display: flex;
           flex-direction: column;
+          overflow: hidden;
+        }
+        .terminal-box {
+          flex: 1 1 0%;
+          min-height: 0;
+          overflow-y: auto !important;
+          overflow-x: hidden;
+          overscroll-behavior: contain;
+          scroll-behavior: smooth;
         }
         .log-drawer.open {
           transform: translateX(0);
@@ -4824,7 +4834,8 @@ ${skill.detailedDesc || skill.desc || ''}`}
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                background: 'rgba(18, 21, 30, 0.92)'
+                background: 'rgba(18, 21, 30, 0.95)',
+                flexShrink: 0
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                   <span style={{ fontSize: '20px' }}>💬</span>
@@ -4874,8 +4885,9 @@ ${skill.detailedDesc || skill.desc || ''}`}
                 alignItems: 'center',
                 gap: '4px',
                 padding: '8px 20px',
-                background: 'rgba(15, 18, 26, 0.95)',
-                borderBottom: '1px solid rgba(255, 255, 255, 0.06)'
+                background: 'rgba(15, 18, 26, 0.98)',
+                borderBottom: '1px solid rgba(255, 255, 255, 0.06)',
+                flexShrink: 0
               }}>
                 <button
                   className="btn"
@@ -4909,8 +4921,38 @@ ${skill.detailedDesc || skill.desc || ''}`}
                 </button>
               </div>
 
-              {/* 微信式聊天记录流 / PM2 控制台输出流 */}
-              <div className="terminal-box" style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '10px', background: '#0b0e17' }}>
+              {/* 微信式聊天记录流 / PM2 控制台输出流 (支持鼠标滚轮自由查看上下文) */}
+              <div
+                className="terminal-box"
+                onWheel={(e) => {
+                  if (e.deltaY < 0 && logAutoScroll) {
+                    setLogAutoScroll(false);
+                  }
+                }}
+                onScroll={(e) => {
+                  const target = e.currentTarget;
+                  const isNearBottom = target.scrollHeight - target.scrollTop - target.clientHeight < 60;
+                  if (!isNearBottom && logAutoScroll) {
+                    setLogAutoScroll(false);
+                  } else if (isNearBottom && !logAutoScroll) {
+                    setLogAutoScroll(true);
+                  }
+                }}
+                style={{
+                  flex: '1 1 0%',
+                  minHeight: 0,
+                  overflowY: 'auto',
+                  overflowX: 'hidden',
+                  overscrollBehavior: 'contain',
+                  scrollBehavior: 'smooth',
+                  padding: '16px 20px 30px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '12px',
+                  background: '#0b0e17',
+                  pointerEvents: 'auto'
+                }}
+              >
                 <div style={{ textAlign: 'center', margin: '4px 0 8px' }}>
                   <span style={{ fontSize: '10.5px', background: 'rgba(255,255,255,0.06)', color: '#94a3b8', padding: '2px 10px', borderRadius: '10px' }}>
                     {logTab === 'ide' ? '💡 当前为 Antigravity IDE 专家对话记录与流水 · 自动滚至最新' : '💡 当前为 PM2 策略脚本控制台标准输出 · 自动滚至最新'}
@@ -5079,7 +5121,10 @@ ${skill.detailedDesc || skill.desc || ''}`}
                 }}>
                   <button
                     type="button"
-                    onClick={() => terminalEndRef.current?.scrollIntoView({ behavior: 'smooth' })}
+                    onClick={() => {
+                      setLogAutoScroll(true);
+                      terminalEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+                    }}
                     style={{
                       padding: '5px 16px',
                       fontSize: '11px',
@@ -5110,9 +5155,10 @@ ${skill.detailedDesc || skill.desc || ''}`}
                 alignItems: 'center',
                 justifyContent: 'space-between',
                 flexWrap: 'wrap',
-                gap: '8px'
+                gap: '8px',
+                flexShrink: 0
               }}>
-                <div style={{ fontSize: '11px', color: '#64748b', display: 'flex', gap: '12px' }}>
+                <div style={{ fontSize: '11px', color: '#64748b', display: 'flex', gap: '12px', alignItems: 'center' }}>
                   {isOnline ? (
                     <>
                       <span>PID: <strong style={{ color: '#cbd5e1' }}>{activeProc.pid}</strong></span>
@@ -5120,8 +5166,27 @@ ${skill.detailedDesc || skill.desc || ''}`}
                       <span>内存: <strong style={{ color: '#cbd5e1' }}>{memoryMb} MB</strong></span>
                     </>
                   ) : (
-                    <span>项目就绪中 · 可点试运行或正式启动</span>
+                    <span>项目就绪中 · 可点试运行或启动</span>
                   )}
+                  <button
+                    type="button"
+                    onClick={() => setLogAutoScroll(!logAutoScroll)}
+                    style={{
+                      background: logAutoScroll ? 'rgba(56, 189, 248, 0.1)' : 'rgba(234, 179, 8, 0.1)',
+                      border: logAutoScroll ? '1px solid rgba(56, 189, 248, 0.3)' : '1px solid rgba(234, 179, 8, 0.3)',
+                      color: logAutoScroll ? '#38bdf8' : '#fde047',
+                      borderRadius: '4px',
+                      padding: '2px 8px',
+                      fontSize: '10.5px',
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '4px'
+                    }}
+                    title={logAutoScroll ? '当前处于实时自动滚屏模式，点击暂停以自由浏览' : '当前处于自由阅读模式，点击恢复自动滚屏'}
+                  >
+                    <span>{logAutoScroll ? '● 自动吸底' : '⏸ 自由滚轮阅读'}</span>
+                  </button>
                 </div>
 
                 <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
