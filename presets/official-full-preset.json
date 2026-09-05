@@ -1,0 +1,177 @@
+{
+  "name": "Antigravity 官方完整版全域生态预设包 (Full Edition Preset)",
+  "version": "1.0.0",
+  "description": "包含 9 大垂直专家决策团、18+ 底层核心自动化 Skill 及 4 套标准示范项目",
+  "projects": [
+    {
+      "id": "starter-quant-trend",
+      "name": "📈 示例多因子动量趋势量化策略",
+      "category": "趋势跟踪",
+      "priority": "P0",
+      "stage": "live",
+      "script": "sample_strategy.py",
+      "interpreter": "python",
+      "args": "--mode paper",
+      "description": "基于双均线多头放量与 MACD 动量共振的示范量化交易策略，集成风控止损与自动报单。",
+      "startDate": "2026-09-01",
+      "dueDate": "2026-12-31",
+      "assignedAgents": [
+        "smart-stock-analyst",
+        "universal-code-reviewer"
+      ],
+      "assignedSkills": [
+        "westock-data",
+        "westock-tool",
+        "superpowers"
+      ],
+      "metrics": {
+        "sharpeRatio": 2.45,
+        "maxDrawdown": "-6.8%",
+        "annualReturn": "+38.6%",
+        "winRate": "68.2%"
+      },
+      "subtasks": [
+        {
+          "id": "t1",
+          "title": "搭建多因子选股池与历史回测",
+          "completed": true
+        },
+        {
+          "id": "t2",
+          "title": "接入实时 L2 盘口滑点模拟与滑点控制",
+          "completed": true
+        },
+        {
+          "id": "t3",
+          "title": "实盘模拟挂机运行与收益率归因",
+          "completed": false
+        }
+      ],
+      "autoRestart": true,
+      "riskLock": true,
+      "logArchiving": true,
+      "isGitSynced": true
+    },
+    {
+      "id": "starter-game-roguelike",
+      "name": "🎮 赛博朋克单文件文字肉鸽射击游戏",
+      "category": "独立小游戏工坊",
+      "priority": "P1",
+      "stage": "testing",
+      "script": "index.html",
+      "interpreter": "browser",
+      "args": "",
+      "description": "基于 HTML5 Canvas 与 Web Audio API 打造的高打击感赛博朋克肉鸽割草小游戏原型，纯前端零三方重依赖。",
+      "startDate": "2026-09-03",
+      "dueDate": "2026-10-15",
+      "assignedAgents": [
+        "indie-game-studio",
+        "modern-web-architects"
+      ],
+      "assignedSkills": [
+        "game-juice-engine",
+        "web-audio-synth",
+        "ui-ux-pro-max",
+        "taste-skill"
+      ],
+      "metrics": {},
+      "subtasks": [
+        {
+          "id": "g1",
+          "title": "设计 MDA 核心循环与弹幕散射碰撞检测",
+          "completed": true
+        },
+        {
+          "id": "g2",
+          "title": "注入屏幕震动、击中顿挫与爆炸粒子动效",
+          "completed": true
+        },
+        {
+          "id": "g3",
+          "title": "用 Web Audio 实时合成 8-bit 音效与跳跃背景乐",
+          "completed": false
+        }
+      ],
+      "autoRestart": false,
+      "riskLock": false,
+      "logArchiving": true,
+      "isGitSynced": true
+    },
+    {
+      "id": "starter-modern-landing-page",
+      "name": "🌐 Bento 极简苹果风高端官网与展示大屏",
+      "category": "现代网页架构",
+      "priority": "P1",
+      "stage": "planning",
+      "script": "npm run dev",
+      "interpreter": "node",
+      "args": "",
+      "description": "采用 Bento Grid 栅格切分、高阶 HSL 调色与毛玻璃拟态的现代全端自适应 Landing Page，首屏加载 LCP < 1.0s。",
+      "startDate": "2026-09-05",
+      "dueDate": "2026-11-01",
+      "assignedAgents": [
+        "modern-web-architects"
+      ],
+      "assignedSkills": [
+        "ui-ux-pro-max",
+        "taste-skill",
+        "frontend-design"
+      ],
+      "metrics": {},
+      "subtasks": [
+        {
+          "id": "w1",
+          "title": "构建 Bento 响应式网格与流体视差滚动框架",
+          "completed": true
+        },
+        {
+          "id": "w2",
+          "title": "全端移动端与 4K 超宽屏自适应无横向滚动排版",
+          "completed": false
+        }
+      ],
+      "autoRestart": false,
+      "riskLock": false,
+      "logArchiving": true,
+      "isGitSynced": true
+    },
+    {
+      "id": "starter-huashu-data-insight",
+      "name": "📊 业务流水异常扫描与三格式全套交付",
+      "category": "数据分析专家组",
+      "priority": "P2",
+      "stage": "backlog",
+      "script": "analyze.py",
+      "interpreter": "python",
+      "args": "--output all",
+      "description": "针对多源业务表格进行 3σ 离群点与同比环比拐点识别，100% 纯本地隐私推理，自动输出 HTML+XLSX+PPTX 权威报告。",
+      "startDate": "2026-09-05",
+      "dueDate": "2026-10-30",
+      "assignedAgents": [
+        "huashu-data-pro"
+      ],
+      "assignedSkills": [
+        "data-autocleaning",
+        "python-development",
+        "pptx-generator"
+      ],
+      "metrics": {},
+      "subtasks": [
+        {
+          "id": "d1",
+          "title": "清洗脏数据并检测离群点分布",
+          "completed": false
+        },
+        {
+          "id": "d2",
+          "title": "自动渲染可交互的深色数据洞察图表大屏",
+          "completed": false
+        }
+      ],
+      "autoRestart": false,
+      "riskLock": false,
+      "logArchiving": true,
+      "isGitSynced": true
+    }
+  ]
+}

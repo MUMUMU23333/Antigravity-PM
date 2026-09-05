@@ -9,336 +9,46 @@ const KANBAN_STAGES = [
 ];
 
 // 全域九大垂直专家团队候选矩阵 (含包含专家成员、挂载技能、领域1-5星评分与详细中文功能介绍)
-const AVAILABLE_EXPERT_TEAMS = [
+// 纯净版: 专家团队支持用户自定义配置、动态增删与导入导出
+const DEFAULT_CLEAN_EXPERT_TEAMS = [
   {
-    id: 'stock-partner-team',
-    name: '👥 腾讯自选股股票投研专家团 (stock-partner-team)',
-    shortName: '腾讯自选股股票投研专家团',
-    role: '7人实战圆桌',
-    domain: 'A股/港美股产业与估值定价',
+    id: 'general-code-reviewer',
+    name: '🔍 通用工业级代码审查官 (code-reviewer)',
+    shortName: '通用代码审查官',
+    role: '全语言工程质检',
+    domain: '通用软件架构与代码健壮性',
     rating: 5.0,
     stars: '⭐⭐⭐⭐⭐ 5.0',
-    membersText: '圆汇众(主编) · 星望远(产业周期) · 洲四方(系统风控) · 文衡价(PE估值) · 坤候底(逆向防守) · 钊审财(财报穿透) · 磊追浪(题材冲浪)',
-    memberList: ['圆汇众 (投研主编·统筹多空对抗与深度思考)', '星望远 (产业周期策略·进攻多头)', '洲四方 (四层信号共振·系统风控)', '文衡价 (PE Bands估值定价)', '坤候底 (逆向安全边际·防守挑刺)', '钊审财 (三大财报穿透·真实业绩验真)', '磊追浪 (短线冲浪与题材共振)'],
-    skills: ['westock-data（全市场行情与财报穿透）', 'westock-tool（多因子量化选股与共振）', 'cross-market-macro-radar（全球跨市场宏观与情绪雷达）', 'md-to-html（Anthropic 浅色研报渲染）'],
-    desc: '融合 TradingAgents 多空博弈与死穴质询机制。涵盖 PE Bands 估值对标、财务粉饰穿透、行业周期拐点捕获、题材资金异动追踪，输出单文件 Anthropic 浅色研报。',
-    detailedDesc: '【专家团职责】7位垂直领域专家通过多流派圆桌对抗与死穴质询，穿透财务粉饰、量化真实估值中枢与宏观流动性共振，严防盲目追高。一键产出单文件独立可分享的专业机构级投研报告。'
-  },
-  {
-    id: 'smart-stock-analyst',
-    name: '🏛️ 星辰多空决策投研团 (smart-stock-analyst)',
-    shortName: '星辰多空决策投研团',
-    role: '5人决策组',
-    domain: '多因子量化与风控一票否决',
-    rating: 4.9,
-    stars: '⭐⭐⭐⭐⭐ 4.9',
-    membersText: '林均线(技术分析) · 侯风声(舆情情报) · 顾基本(基本面护城河) · 华定夺(一票否决) · 策辰(主理人)',
-    memberList: ['林均线 (技术面均线与量价突破)', '侯风声 (情报舆情与盘面异动监测)', '顾基本 (基本面护城河与财务底仓)', '华定夺 (风控一票否决·红蓝压力测试)', '策辰 (主理人·四维信号收敛与大屏生成)'],
-    skills: ['westock-data（全市场行情与财报穿透）', 'sequoia-quant-screener（欧奈尔突破量化选股）', 'cross-market-macro-radar（全球跨市场宏观与情绪雷达）', 'quant-overfit-radar（WFA滚动前向与抗过拟合雷达）'],
-    desc: '主打确定性与风控一票否决权。汇聚量价技术、舆情利空穿透、多因子收敛算法与红蓝军极限压力测试，自动生成 0-100 综合置信分与数据大屏。',
-    detailedDesc: '【专家团职责】在买入或调仓前发起红蓝军对抗，华定夺针对历史最大回撤与流动性枯竭拥有一票否决权；策辰主理人综合四维评分驱动交易，坚守高确定性安全边际。'
-  },
-  {
-    id: 'system-chief-engineer',
-    name: '🛡️ 钱学森工程控制论总工守门员 (system-chief-engineer)',
-    shortName: '钱学森工程控制论总工守门员',
-    role: '系统总工·大白话守门',
-    domain: '全局系统架构与抗溃败控制论',
-    rating: 5.0,
-    stars: '⭐⭐⭐⭐⭐ 5.0',
-    membersText: '控制论闭环架构师 · 大白话降维比喻师 · 三大崩溃死穴排查官 · 稳态参数调优师',
-    memberList: ['控制论闭环架构师 (开闭环抗扰度、负反馈与自愈系统)', '大白话降维比喻师 (降维做饭比喻、彻底杜绝黑话)', '三大崩溃死穴排查官 (时滞发散、正反馈滚雪球、资源枯竭)', '稳态参数调优师 (精确开关控制与容灾回滚)'],
-    skills: ['universal-code-reviewer（全语言六维工业级代码审查官）', 'vscode-compatibility（VS Code / Cursor 全生态兼容调试器）', 'superpowers（TDD 测试驱动与原子隔离工程总线）', 'ponytail（老资深 7 级减法天梯反过度设计）'],
-    desc: '系统守门员。以钱学森工程控制论纵观全局，用做饭通俗大白话把关系统健康，排查时滞与发散死穴，拥有一票否决系统崩盘风险的最高权限。',
-    detailedDesc: '【专家团职责】从动态系统闭环抗扰度、时滞补偿、死锁与内存崩溃根因出发，一票否决潜在系统溃败风险，将高深逻辑转化为通俗大白话，确保系统长周期健壮运行。'
-  },
-  {
-    id: 'universal-code-reviewer',
-    name: '🔍 全语言工业级代码审查官 (universal-code-reviewer)',
-    shortName: '全语言工业级代码审查官',
-    role: '全语言工业质检',
-    domain: '全栈软件工程与代码质量质检',
-    rating: 4.9,
-    stars: '⭐⭐⭐⭐⭐ 4.9',
-    membersText: '逻辑与并发安全分析官 · OWASP安全审计官 · 极端反例轰炸官 · 极简架构裁判',
-    memberList: ['逻辑与并发安全分析官 (死锁/竞态/状态不可变性)', 'OWASP安全审计官 (漏洞/提权/越权/注入扫描)', '极端反例轰炸官 (边界条件/N=0或1/溢出反例轰炸)', '极简架构裁判 (Ponytail 7步减法与反过度抽象)'],
-    skills: ['universal-code-reviewer（全语言六维工业级代码审查官）', 'ponytail（老资深 7 级减法天梯反过度设计）', 'superpowers（TDD 测试驱动与原子隔离工程总线）', 'vscode-compatibility（VS Code / Cursor 全生态兼容调试器）'],
-    desc: '覆盖 Python / JS / TS / Rust / Go / C++ / Java / SQL 全语言栈。实施逻辑正确性、安全漏洞、边界并发、内存泄漏、反过度设计、性能瓶颈与代码质感全景审查。',
-    detailedDesc: '【专家团职责】在代码交付前进行严格的六维工业级审查。绝不放过任何未处理的边界异常、内存泄露与隐藏死锁，确保产出的每一行生产级代码均 100% 实测跑通。'
-  },
-  {
-    id: 'indie-game-studio',
-    name: '🎮 独立小游戏全流程工坊 (indie-game-studio)',
-    shortName: '独立小游戏全流程工坊',
-    role: '6人全流程游戏研发',
-    domain: 'HTML5/Canvas小游戏与打击感注入',
-    rating: 4.8,
-    stars: '⭐⭐⭐⭐½ 4.8',
-    membersText: '主策划(MDA机制) · 玩法程序(60FPS) · 数值策划 · 关卡设计 · 淬光师(震屏/顿挫) · 鸣金师(纯代码音效)',
-    memberList: ['主策划 (Game Designer·核心循环与MDA机制)', '玩法程序 (Gameplay Programmer·60FPS物理主循环)', '数值策划 (Systems Designer·成长曲线与数值平衡)', '关卡设计 (Level Designer·动态刷怪与障碍递进)', '淬光师 (Game Juice Artist·屏幕震动/顿挫/粒子)', '鸣金师 (Sound Designer·Web Audio 纯代码合成纯音效)'],
-    skills: ['game-juice-engine（震屏打击感与物理动效引擎）', 'web-audio-synth（Web Audio 原生纯代码音频合成器）', 'taste-skill（Anti-Slop 高阶前端审美）', 'brainstorm（游戏概念风暴与创意架构）'],
-    desc: '单文件 HTML5 / Canvas 游戏极速交付工坊。支持 60FPS 物理引擎、Screen Shake 屏幕震动、Hitstop 顿挫打击感、粒子系统与纯代码 Web Audio 合成音效，开箱即玩。',
-    detailedDesc: '【专家团职责】完成从游戏玩法机制构思、物理碰撞检测、数值梯度调优，到屏幕抖动震感、粒子飞溅与零外部媒体依赖的原生合成音效打磨，打造手感丝滑的单文件独立精品。'
-  },
-  {
-    id: 'modern-web-architects',
-    name: '🌐 高端互动网页与体验架构师 (modern-web-architects)',
-    shortName: '高端互动网页与体验架构师',
-    role: '5人全栈视觉工程',
-    domain: '现代 Web 交互与高端视觉体验',
-    rating: 4.9,
-    stars: '⭐⭐⭐⭐⭐ 4.9',
-    membersText: '苍穹(主架构师) · 矩度(Bento栅格) · 流光(动效微交互) · 疾风(性能LCP<1.2s) · 寰宇(全端适配)',
-    memberList: ['苍穹 (主架构师·视觉叙事与核心转化路径)', '矩度 (Bento 架构师·栅格切分与高级毛玻璃拟态)', '流光 (动效微交互师·GSAP流体视差与3D倾斜)', '疾风 (性能专家·LCP<1.2s与INP毫秒级调优)', '寰宇 (全端适配专家·4K/移动端全响应式)'],
-    skills: ['ui-ux-pro-max（顶级前端设计智能与微交互）', 'taste-skill（Anti-Slop 高阶前端审美）', 'frontend-design（去AI塑料感高质感组件库）', 'crawl4ai（大模型轻量级异步反爬抓取引擎）'],
-    desc: '打造令用户一眼惊艳的高端数字化官网与大屏。消灭 AI 塑料感与模板廉价感，融入 Bento 栅格切分、极简克制 HSL 调色盘、物理弹性微交互与极致端到端性能。',
-    detailedDesc: '【专家团职责】构建极具现代科技质感与苹果级克制审美的数字化产品界面。全端自适应 4K 宽屏至手机竖屏，首屏 LCP 严格控制在 1.2 秒以内，交互流畅无卡顿。'
-  },
-  {
-    id: 'huashu-data-pro',
-    name: '📊 花叔数据分析专家团 (huashu-data-pro)',
-    shortName: '花叔数据分析专家团',
-    role: '4人全流程本地数据组',
-    domain: '离线数据挖掘与三格式报告交付',
-    rating: 4.8,
-    stars: '⭐⭐⭐⭐½ 4.8',
-    membersText: '主理人(数据洞察) · 趋势分析师(时间序列) · 结构分析师(二八贡献) · 异常侦察员(3σ离群扫描)',
-    memberList: ['主理人 (数据洞察总监·统筹全局与三格式交付)', '趋势分析师 (时间序列/同比环比/拐点识别)', '结构分析师 (多表交叉/二八贡献率/特征分布)', '异常侦察员 (3σ准则/IQR离群突变扫描)'],
-    skills: ['data-autocleaning（自动化数据清洗与模式映射）', 'bigquery-sql（极速大数据分析与SQL性能调优）', 'python-development（现代化Python全栈与异步研发）', 'pptx-generator（标准可编辑PPTX幻灯片生成器）'],
-    desc: '100% 纯本地隐私安全推理（数据零云端上传）。三路专家并行多维交叉扫描，精准识别 3σ 离群点与业务拐点，一次性交付 HTML 交互大屏 + XLSX 细表 + PPTX 汇报幻灯片。',
-    detailedDesc: '【专家团职责】针对海量业务数据、财务报表、交易流水进行无损隐私分析。快速完成多表关联清洗、二八定律结构拆解与异动预警，生成图文并茂的三格式权威复盘报告。'
-  },
-  {
-    id: 'humanize-ppt-team',
-    name: '📑 卡尔人感演示与PPT专家团 (humanize-ppt-team)',
-    shortName: '卡尔人感演示与PPT专家团',
-    role: '7人全流程演说呈现',
-    domain: '人感幻灯片与双屏演讲系统',
-    rating: 4.7,
-    stars: '⭐⭐⭐⭐½ 4.7',
-    membersText: '大纲导演(AST大纲) · 归藏渲染师(电子墨水) · 前端渲染师 · 视频动效师 · 演讲模式师(双屏讲稿)',
-    memberList: ['主理人 (全局节奏与演说风格定调)', '大纲导演 (outline-director·AST人感大纲契约)', '归藏渲染师 (guizang-renderer·电子杂志与墨水风)', '前端渲染师 (frontend-slides-renderer·现代动效Web幻灯片)', '视频动效师 (video-motion-agent·Remotion代码视频生成)', '演讲模式师 (html-ppt-presenter·双屏提词与逐页讲稿)', '质检官 (qa·人感及排版可用性终审)'],
-    skills: ['humanize-ppt（AST人感大纲与演说结构导演）', 'guizang-ppt-skill（归藏电子杂志与电子墨水风单文件演示）', 'frontend-slides（现代Web视差动效HTML幻灯片生成器）', 'pptx-generator（标准可编辑PPTX幻灯片生成器）'],
-    desc: '专为高管述职、技术分享与产品发布会设计。将干瘪材料提炼为呼吸感 AST 人感大纲，提供电子墨水风、双屏演讲者视图、计时器、逐页讲稿与可编辑导出支持。',
-    detailedDesc: '【专家团职责】彻底告别传统 AI 假大空流水账幻灯片。精准匹配演讲情绪曲线，设计电影级转场幕封与数据大字报，配套独立的演讲者双屏模式与逐字提词备忘录。'
-  },
-  {
-    id: 'novel-writer-suite',
-    name: '📖 长篇小说与文学创作专家团 (novel-writer-suite)',
-    shortName: '长篇小说与文学创作专家团',
-    role: '6人工业化编剧组',
-    domain: '长篇网文工业化与无说教叙事',
-    rating: 4.7,
-    stars: '⭐⭐⭐⭐½ 4.7',
-    membersText: '司徒策(叙事总监) · 纪元师(世界观) · 刻骨师(人物弧光) · 破阵师(硬核博弈) · 洗砚师(去AI精修)',
-    memberList: ['司徒策 (叙事总监·全景节拍表与收束钩子)', '纪元师 (世界观与底层科技/玄幻力量法则)', '刻骨师 (人物四维弧光·欲求/缺失/弱点/秘密)', '破阵师 (硬核剧情解缚·真实博弈与冲突张力)', '洗砚师 (去AI味精修·消除虚假对仗与说教腔)', '画影师 (分镜拆解与全篇生图提示词)'],
-    skills: ['novel-architect（长篇小说世界观与工业化大纲架构师）', 'deep-humanizer-pro（深度去AI痕迹与文学质感重塑引擎）', 'creative-unshackle（硬核剧情解缚与沉浸式博弈叙事）', 'story-to-scenes（长文本拆镜批量生图引擎）'],
-    desc: '工业化网文大纲与长篇叙事矩阵。执行文学解缚协议，彻底粉碎“总而言之/双刃剑”等 AI 说教套话，打造立体人物弧光、黄金三章强钩子与电影级分镜博弈。',
-    detailedDesc: '【专家团职责】构建严密的世界观法则与阵营对抗图谱。从人物表层欲望到深层缺失展开立体塑造，在紧张冲突中推演剧情反转，输出充满市井烟火气与文学张力的作品。'
+    membersText: '逻辑安全分析官 · 架构督查 · 边界反例审议',
+    memberList: ['逻辑与并发安全分析官 (死锁与竞态排查)', 'OWASP安全审计官 (基础安全漏洞扫描)', '极简反倒退审议官 (边界异常保护)'],
+    skills: ['superpowers（TDD 测试驱动与原子隔离工程总线）'],
+    desc: '轻量通用代码审查团队，负责防范边界异常、内存泄露与隐蔽逻辑缺陷。',
+    detailedDesc: '【专家团职责】在项目交付前进行全景代码审查，确保每一行代码均 100% 严谨可靠。'
   }
 ];
+const AVAILABLE_EXPERT_TEAMS = DEFAULT_CLEAN_EXPERT_TEAMS;;
 
 // 核心本地量化与研发技能库候选矩阵 (严格遵循 AAA（中文介绍）规范，含所在领域1-5星打分与详细中文功能介绍)
-const AVAILABLE_SKILLS = [
-  {
-    id: 'westock-data',
-    name: 'westock-data（全市场行情与财报穿透）',
-    shortName: '全市场行情与财报穿透',
-    type: '行情与财报',
-    domain: 'A股/港股/美股实时数据',
-    rating: 5.0,
-    stars: '⭐⭐⭐⭐⭐ 5.0',
-    desc: '基于 westock-mcp 直连通道，秒级获取 A股、港美股最新行情、分时与日周月K线、主力资金流向（超大单/大单/中单/小单）及近三年深度财报资产负债指标。',
-    detailedDesc: '【核心功能】多市场实时行情行情看板、超大单主力净流入跟踪、三大财报（资产负债表、利润表、现金流量表）历史明细穿透，为量化策略与投研决策提供真实底层数据源。'
-  },
-  {
-    id: 'westock-tool',
-    name: 'westock-tool（多因子量化选股与共振）',
-    shortName: '多因子量化选股与共振',
-    type: '多因子选股',
-    domain: '多因子模型与条件筛选',
-    rating: 4.9,
-    stars: '⭐⭐⭐⭐⭐ 4.9',
-    desc: '盘后自动化条件选股引擎。支持 MACD 零轴上金叉共振、破净高股息筛选、低 PE 高 ROE 核心资产挖掘、筹码集中度与换手率异常监测。',
-    detailedDesc: '【核心功能】提供全市场量价与基本面指标多维交集筛选，能够快速跑出符合葛兰碧法则、海龟通道突破或巴菲特护城河标准的潜力个股池。'
-  },
-  {
-    id: 'cross-market-macro-radar',
-    name: 'cross-market-macro-radar（全球跨市场宏观与情绪雷达）',
-    shortName: '全球跨市场宏观与情绪雷达',
-    type: '全球宏观',
-    domain: '宏观流动性与全网情绪感知',
-    rating: 4.9,
-    stars: '⭐⭐⭐⭐⭐ 4.9',
-    desc: '实时监控美联储利率预期、美元指数、原油黄金大宗商品异动，聚合全网社交舆情与热搜雷达，为策略运行注入高置信度宏观流动性上下文。',
-    detailedDesc: '【核心功能】基于 TrendRadar 与全球监控标准，实时捕捉地缘政治危机、汇率剧烈波动、外资离岸资金流向与市场避险情绪升温，提前预警系统性黑天鹅。'
-  },
-  {
-    id: 'quant-portfolio-hrp',
-    name: 'quant-portfolio-hrp（分层风险平价资产配置）',
-    shortName: '分层风险平价资产配置',
-    type: '资金风控',
-    domain: '现代投资组合与头寸配置',
-    rating: 4.8,
-    stars: '⭐⭐⭐⭐½ 4.8',
-    desc: '基于图论聚类与分层树状协方差矩阵（HRP），克服传统马科维茨均值方差模型逆矩阵奇异性问题，在极端市场波动下科学计算个股仓位权重上限。',
-    detailedDesc: '【核心功能】利用分层机器学习聚类对多只标的进行关联度切分，实现真正的风险分散。防止高波动资产在黑天鹅时期对总账户净值造成毁灭性穿透。'
-  },
-  {
-    id: 'quant-overfit-radar',
-    name: 'quant-overfit-radar（WFA滚动前向与抗过拟合雷达）',
-    shortName: 'WFA滚动前向与抗过拟合雷达',
-    type: '抗过拟合',
-    domain: '量化策略稳健性与防幸存者偏差',
-    rating: 4.8,
-    stars: '⭐⭐⭐⭐½ 4.8',
-    desc: '集成滚动前向检验（Walk-Forward Analysis）与过拟合概率计算（PBO），对策略样本内参数进行极端扰动压力测试，甄别虚假高收益陷阱。',
-    detailedDesc: '【核心功能】穿透回测曲线中的“回测完美、实盘崩溃”现象，严格评估参数孤岛。只有通过跨周期滚动样本外验证的策略方可批准上线。'
-  },
-  {
-    id: 'tick-slippage-simulator',
-    name: 'tick-slippage-simulator（L2盘口滑点与大额冲击模拟）',
-    shortName: 'L2盘口滑点与大额冲击模拟',
-    type: '交易执行',
-    domain: '高频微观结构与冲击成本测算',
-    rating: 4.7,
-    stars: '⭐⭐⭐⭐½ 4.7',
-    desc: '高保真模拟 Level-2 买卖五档至十档盘口挂单深度与撮合队列，精准测算大单拆单冲击成本与实际成交滑点，避免实盘出现不可承受的隐形成本。',
-    detailedDesc: '【核心功能】在回测与实盘模拟中注入微观市场摩擦力。真实复现小盘股流动性枯竭时“买不上、卖不出”的盘口踩踏场景，测算真实的净收益率。'
-  },
-  {
-    id: 'game-juice-engine',
-    name: 'game-juice-engine（震屏打击感与物理动效引擎）',
-    shortName: '震屏打击感与物理动效引擎',
-    type: '游戏打击感',
-    domain: 'Canvas物理动效与游戏触觉反馈',
-    rating: 4.9,
-    stars: '⭐⭐⭐⭐⭐ 4.9',
-    desc: '游戏打击感淬光引擎。纯原生 Canvas 注入物理衰减震屏（Screen Shake）、命中顿挫暂停（Hitstop）、烟火粒子爆炸、弹簧弹性缓动与浮动暴击伤害字效。',
-    detailedDesc: '【核心功能】让 2D 小游戏瞬间具备 3A 级畅快手感。集成经典弹簧阻尼运动方程与多层视差抖动，开箱即用，无需庞大重型游戏引擎即可实现极爽体验。'
-  },
-  {
-    id: 'web-audio-synth',
-    name: 'web-audio-synth（Web Audio 原生纯代码音频合成器）',
-    shortName: 'Web Audio 原生纯代码音频合成器',
-    type: '原生音效',
-    domain: '浏览器原生代码合成音效',
-    rating: 4.8,
-    stars: '⭐⭐⭐⭐½ 4.8',
-    desc: '无需加载任何外部 mp3/wav 媒体文件。基于 Web Audio API 振荡器与白噪声发生器，毫秒级实时生成激光射击、爆炸撞击、金币拾取与 8-bit 复古背景音律。',
-    detailedDesc: '【核心功能】彻底解决小游戏音频加载慢、跨域报错和文件体积大的痛点。纯依靠正弦波/方波/锯齿波与滤波器在代码中实时调制，轻盈且即时响应。'
-  },
-  {
-    id: 'ui-ux-pro-max',
-    name: 'ui-ux-pro-max（顶级前端设计智能与微交互）',
-    shortName: '顶级前端设计智能与微交互',
-    type: '设计系统智能',
-    domain: '全栈UI/UX与设计系统智能化',
-    rating: 5.0,
-    stars: '⭐⭐⭐⭐⭐ 5.0',
-    desc: '涵盖 50 种国际主流设计风格、21 套精研 HSL 调色盘与 50 组专业字体排版对齐。彻底消灭 AI 前端模板塑料感，赋予界面极客质感与丝滑微交互。',
-    detailedDesc: '【核心功能】从色阶计算、毛玻璃拟态遮罩、阴影层级深度、卡片边缘高光，到响应式栅格布局无所不包，保证交付的网页达到消费级工业品质。'
-  },
-  {
-    id: 'taste-skill',
-    name: 'taste-skill（Anti-Slop 高阶前端审美）',
-    shortName: 'Anti-Slop 高阶前端审美',
-    type: '高审美去塑料感',
-    domain: '去模板化与克制微交互设计规范',
-    rating: 4.9,
-    stars: '⭐⭐⭐⭐⭐ 4.9',
-    desc: '严格遵守克制极简排版、物理留白层次、自然光影毛玻璃与低饱和色彩平衡，保障代码在没有重型 CSS 框架依赖下依然呈现消费级甚至艺术级工业质感。',
-    detailedDesc: '【核心功能】斩断千篇一律的廉价 AI 渐变和粗暴阴影。引入数学级黄金分割间距、细边框内发光与精细微排版，提升整个界面的高级感与呼吸感。'
-  },
+// 纯净版: 基础通用核心技能库 (可随时在界面增删或挂载自定义插件)
+const DEFAULT_CLEAN_SKILLS = [
   {
     id: 'superpowers',
     name: 'superpowers（TDD 测试驱动与原子隔离工程总线）',
-    shortName: 'TDD 测试驱动与原子隔离工程总线',
-    type: 'TDD工程总线',
-    domain: '测试驱动开发与代码回滚保护',
-    rating: 5.0,
+    type: '工程规范',
+    domain: '通用工程架构',
     stars: '⭐⭐⭐⭐⭐ 5.0',
-    desc: '以严谨单元测试为先导（TDD），将复杂功能拆解为细粒度原子子任务，执行多沙箱上下文隔离，具备代码变更高危即刻自动回滚的工业级防御能力。',
-    detailedDesc: '【核心功能】红灯-绿灯-重构闭环保障。在每项逻辑落地前先编写断言测试用例，通过子智能体原子化分治任务，杜绝大模型编写过程中的走神与副作用破坏。'
-  },
-  {
-    id: 'ponytail',
-    name: 'ponytail（老资深 7 级减法天梯反过度设计）',
-    shortName: '老资深 7 级减法天梯反过度设计',
-    type: '老资深减法天梯',
-    domain: '系统架构极简化与反过度工程',
-    rating: 5.0,
-    stars: '⭐⭐⭐⭐⭐ 5.0',
-    desc: '遵循顶级资深工程师“不写无用代码”哲学。按“YAGNI必要性→已有复用→标准库→原生特性→现有依赖→单行实现→最小精悍代码”7级天梯无情剔除代码膨胀。',
-    detailedDesc: '【核心功能】严防虚伪的设计模式崇拜。主动审查冗余包装类与多余依赖，支持一键 /ponytail-audit 扫描并生成代码删除清单，让工程精简坚固。'
-  },
-  {
-    id: 'mem0-memory-engine',
-    name: 'mem0-memory-engine（跨会话长期记忆与知识沉淀中枢）',
-    shortName: '跨会话长期记忆与知识沉淀中枢',
-    type: '跨会话长期记忆',
-    domain: '智能体持久化记忆与用户偏好萃取',
-    rating: 4.8,
-    stars: '⭐⭐⭐⭐½ 4.8',
-    desc: '多智能体协作与用户偏好的记忆大脑。自动从对话与研发交互中萃取策略经验、项目死穴踩坑记录与核心技术偏好，支持语义向量近邻检索无损注入。',
-    detailedDesc: '【核心功能】彻底告别大模型“新会话就失忆”的痛点。动态记录每次调优的参数敏感度、代码喜好与历史 Bug 根因，在新会话开始时零负担精准锚定。'
-  },
-  {
-    id: 'crawl4ai',
-    name: 'crawl4ai（大模型轻量级异步反爬抓取引擎）',
-    shortName: '大模型轻量级异步反爬抓取引擎',
-    type: '异步智能采集',
-    domain: '高韧性网页抓取与结构化提取',
-    rating: 4.7,
-    stars: '⭐⭐⭐⭐½ 4.7',
-    desc: '专为大模型设计的高性能异步爬虫。内置 Stealth 反检测穿透、动态 JavaScript 渲染水合、智能去噪与 LLM 友好型纯净 Markdown 结构化输出。',
-    detailedDesc: '【核心功能】能够极速抓取动态渲染的研报网站、财经论坛与数据接口，自动过滤广告与无意义 HTML 标签，直接提取高信噪比结构化文本。'
+    desc: '严格的测试驱动开发 (TDD) 引擎、子任务上下文隔离、细粒度分步实施规划与原子回滚保护。'
   },
   {
     id: 'universal-code-reviewer',
     name: 'universal-code-reviewer（全语言六维工业级代码审查官）',
-    shortName: '全语言六维工业级代码审查官',
-    type: '全语言工业质检',
-    domain: '代码质量全景审查与安全审计',
-    rating: 5.0,
-    stars: '⭐⭐⭐⭐⭐ 5.0',
-    desc: '全面覆盖逻辑正确性、OWASP安全漏洞、并发死锁与内存竞态、反过度设计、性能瓶颈与代码质感六维全景质检，保障每一行交付代码均能稳定实测跑通。',
-    detailedDesc: '【核心功能】全语言工业级质检引擎，深入检查变量生命周期、异步时序（Promise/Async/Await/Locks）、边界溢出条件，并自动给出外科手术式修复方案。'
-  },
-  {
-    id: 'vscode-compatibility',
-    name: 'vscode-compatibility（VS Code / Cursor 全生态兼容调试器）',
-    shortName: 'VS Code / Cursor 全生态兼容调试器',
-    type: '开发环境兼容',
-    domain: 'IDE生态配置与跨平台调试',
-    rating: 4.7,
-    stars: '⭐⭐⭐⭐½ 4.7',
-    desc: '自动化构建与维护 .vscode 的 launch.json、tasks.json 与 settings.json，桥接 Python/Node/Go 调试器，打通项目在 VS Code 与 Cursor 中的热重载与断点运行。',
-    detailedDesc: '【核心功能】确保本地所有开发、调试与运行配置无缝跨工具共享，一键配置断点调试与自动化构建任务，让任何工程在不同编辑器中开箱即用。'
-  },
-  {
-    id: 'joinquant-skill',
-    name: 'joinquant-skill（聚宽量化回测与策略研发套件）',
-    shortName: '聚宽量化回测与策略研发套件',
-    type: '聚宽量化研发',
-    domain: '聚宽平台API规范与因子回测',
-    rating: 4.8,
-    stars: '⭐⭐⭐⭐½ 4.8',
-    desc: '原生适配聚宽（JoinQuant）量化回测引擎。包含 initialize、handle_data 核心生命周期规范、全市场财务因子读取、撮合滑点设置与盘后风控逻辑。',
-    detailedDesc: '【核心功能】提供最规范的聚宽标准模板与避坑指南，完美处理多因子合成、行情动态获取、防未来函数校验与历史回测基准对齐。'
-  },
-  {
-    id: 'quant2ptrader-mcp',
-    name: 'quant2ptrader-mcp（聚宽转 Ptrade 实盘无缝适配器）',
-    shortName: '聚宽转 Ptrade 实盘无缝适配器',
-    type: '实盘转换适配',
-    domain: '券商实盘接口与策略跨环境迁移',
-    rating: 4.9,
+    type: '代码质检',
+    domain: '通用代码审查',
     stars: '⭐⭐⭐⭐⭐ 4.9',
-    desc: '一键将聚宽回测策略无损迁移至券商 Ptrade 实盘环境。自动处理对象句柄差异、盘口撤单重挂时序、资金可用状态校验与异常网络重连，无缝进入实盘托管。',
-    detailedDesc: '【核心功能】架起回测到实盘的稳健桥梁。消除平台 API 语法代沟，内置实盘撤单防死锁、多账号资金隔离与断线重连守护机制，保障实盘平稳运行。'
+    desc: '全语言代码审查全景引擎，覆盖逻辑正确性、安全漏洞、并发边界与代码质感全景审查。'
   }
 ];
+const AVAILABLE_SKILLS = DEFAULT_CLEAN_SKILLS;;
 
 const getDefaultAgents = (proj) => {
   if (proj?.assignedAgents && proj.assignedAgents.length > 0) return proj.assignedAgents;
@@ -3974,9 +3684,9 @@ export default function App() {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '14px' }}>
                 <div>
                   <h2 style={{ fontSize: '18px', fontWeight: 700, color: '#f8fafc', display: 'flex', alignItems: 'center', gap: '10px', margin: '0 0 6px' }}>
-                    <span>🧩</span> Antigravity 多智能体专家团与技能生态中心
+                    <span>🧩</span> Antigravity 多智能体项目管理中心 (纯净版)
                     <span style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '12px', background: 'rgba(168,85,247,0.3)', color: '#d8b4fe', fontWeight: 600 }}>
-                      v3.0 全自动零标签协同总线
+                      v1.1.0 纯净开源版 · 自由配置
                     </span>
                   </h2>
                   <p style={{ fontSize: '12px', color: '#94a3b8', margin: 0, lineHeight: 1.6 }}>
