@@ -641,8 +641,8 @@ ipcMain.handle('ide-conversation-logs', async (event, projectName) => {
       const candidates = [
         path.join(__dirname, 'get_ide_logs.py'),
         path.join(process.cwd(), 'get_ide_logs.py'),
-        path.join(process.cwd(), 'get_ide_logs.py'),
-        path.join(__dirname, '..', 'get_ide_logs.py')
+        'C:\\Users\\Administrator\\Desktop\\量化策略源代码\\scratch\\antigravity-pm\\get_ide_logs.py',
+        'C:\\Users\\Administrator\\Desktop\\Antigravity-PM\\resources\\app\\get_ide_logs.py'
       ];
       let scriptPath = candidates.find(p => fs.existsSync(p));
       debugLog(`[ide-conversation-logs] querying logs for ${projectName}, script: ${scriptPath}`);

@@ -4,11 +4,9 @@ const os = require('os');
 const { execSync } = require('child_process');
 
 // 统一共享数据库路径定义（Antigravity IDE 与 Antigravity PM 直连共用）
-// 动态跨平台用户主目录
-const USER_HOME = os.homedir();
-const IDE_SHARED_DIR = path.join(USER_HOME, '.gemini', 'antigravity-ide');
+const IDE_SHARED_DIR = 'C:\\Users\\Administrator\\.gemini\\antigravity-ide';
 const IDE_SHARED_PROJECTS_PATH = path.join(IDE_SHARED_DIR, 'projects.json');
-const GEMINI_SHARED_PROJECTS_PATH = path.join(USER_HOME, '.gemini', 'antigravity', 'projects.json');
+const GEMINI_SHARED_PROJECTS_PATH = 'C:\\Users\\Administrator\\.gemini\\antigravity\\projects.json';
 
 // 原子写入 JSON
 function atomicWriteJsonSync(targetPath, data) {
@@ -56,7 +54,7 @@ function saveSharedProjects(projects, localUserDataDir) {
     } catch (e) {}
   }
 
-  const quantDirNorm = path.join(USER_HOME, 'Desktop', '量化策略源代码').toLowerCase();
+  const quantDirNorm = 'C:\\Users\\Administrator\\Desktop\\量化策略源代码'.toLowerCase();
   projects.forEach(item => {
     try {
       if (item.isGitSynced !== false && item.cwd && fs.existsSync(item.cwd)) {
