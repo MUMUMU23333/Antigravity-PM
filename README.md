@@ -40,6 +40,31 @@
 
 ---
 
+
+---
+
+## 📸 系统全景界面预览 (Screenshots)
+
+简洁直观的高端 Bento 深色界面，专为中国人日常操盘与研发习惯设计：
+
+### 1. 📊 策略研发与执行看板 (Kanban View)
+清晰呈现四大生命周期阶段（待回测评估 ➔ 模拟测试中 ➔ 实盘守护中 ➔ 已结项归档），量化指标与夏普/最大回撤一屏了然，支持一键试运行与后台守护托管。
+<p align="center">
+  <img src="./docs/images/kanban-board.png" alt="Antigravity-PM 策略研发与执行看板" width="96%">
+</p>
+
+### 2. 🌲 多维树状策略清单 (Strategy Tree List)
+支持策略与子任务树状级联展开、完成勾选即时联动、多流派智能筛选（量化策略、智能体生态、影音管理、智能语音等），批量调度管理游刃有余。
+<p align="center">
+  <img src="./docs/images/strategy-tree-list.png" alt="Antigravity-PM 树状清单视图" width="96%">
+</p>
+
+### 3. 🧩 技能与九大专家团矩阵中心 (Skill & Agent Hub)
+完整调度 9 大垂直行业决策圆桌（星辰投研团、腾讯自选股圆桌、独立小游戏工坊、高端网页架构师等）与 20+ 底层专业技能，支持大卡片与紧凑条目自由切换，一键与 IDE 深度记忆互通。
+<p align="center">
+  <img src="./docs/images/skills-and-agents-hub.png" alt="Antigravity-PM 技能与专家团矩阵" width="96%">
+</p>
+
 ## 🚀 快速上手 (Quick Start)
 
 ### 1. 下载仓库
