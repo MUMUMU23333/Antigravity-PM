@@ -3,12 +3,12 @@ const path = require('path');
 const fs = require('fs');
 const os = require('os');
 const { execSync, spawn, execFile } = require('child_process');
-const pm2 = require('pm2');
-const ideSync = require('./ideSync.cjs');
 
 const DEBUG_LOG_PATH = path.join(os.homedir(), 'AppData', 'Roaming', 'Antigravity-PM', 'app.log');
 function debugLog(msg) {
   try {
+    const dir = path.dirname(DEBUG_LOG_PATH);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
     fs.appendFileSync(DEBUG_LOG_PATH, `[${new Date().toISOString()}] ${msg}\n`);
   } catch(e) {}
 }
@@ -20,6 +20,22 @@ process.on('uncaughtException', (err) => {
 process.on('unhandledRejection', (reason) => {
   debugLog('unhandledRejection: ' + (reason ? reason.stack || reason.message : 'unknown'));
 });
+
+let pm2 = null;
+try {
+  pm2 = require('pm2');
+  debugLog('pm2 loaded successfully');
+} catch (e) {
+  debugLog('Warning: pm2 require failed: ' + e.message);
+}
+
+let ideSync = null;
+try {
+  ideSync = require('./ideSync.cjs');
+  debugLog('ideSync loaded successfully');
+} catch (e) {
+  debugLog('Warning: ideSync require failed: ' + e.message);
+}
 
 // 1. 全局关键路径置顶声明（避免任何闭包在 TDZ 暂存死区内访问引发 ReferenceError）
 app.setName('Antigravity-PM');
