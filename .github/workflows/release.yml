@@ -1,0 +1,82 @@
+name: 🚀 Build & Release Antigravity-PM
+
+on:
+  push:
+    branches: [ main ]
+    tags:
+      - 'v*'
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-verify:
+    name: 🛠️ 编译质检与版本分发
+    runs-on: windows-latest
+
+    steps:
+      - name: 📥 检出仓库代码
+        uses: actions/checkout@v4
+
+      - name: ⚙️ 配置 Node.js 运行环境 (v20)
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: Pure/package.json
+
+      - name: 🧪 验证纯净版 (Pure) 依赖与构建
+        shell: cmd
+        run: |
+          cd Pure
+          call npm install
+          call npm run build
+
+      - name: 🧪 验证完整版 (Full) 依赖与构建
+        shell: cmd
+        run: |
+          cd Full
+          call npm install
+          call npm run build
+
+      - name: 📦 生成纯净版与完整版绿色免安装发布包
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: powershell
+        run: |
+          Write-Host "正在打包纯净版 Antigravity-PM-Pure..."
+          Compress-Archive -Path Pure/* -DestinationPath Antigravity-PM-Pure-${{ github.ref_name }}.zip -Force
+          Write-Host "正在打包完整版 Antigravity-PM-Full..."
+          Compress-Archive -Path Full/* -DestinationPath Antigravity-PM-Full-${{ github.ref_name }}.zip -Force
+          Get-Item Antigravity-PM-*.zip | Format-Table Name, Length, LastWriteTime
+
+      - name: 🚀 自动发布到 GitHub Releases 供全球用户下载
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            Antigravity-PM-Pure-${{ github.ref_name }}.zip
+            Antigravity-PM-Full-${{ github.ref_name }}.zip
+          name: "Antigravity-PM ${{ github.ref_name }}"
+          body: |
+            ## 🚀 Antigravity-PM ${{ github.ref_name }} 正式发布！
+
+            欢迎下载使用 **Antigravity-PM** 可视化项目管理与多智能体协同总线！
+
+            ### 📦 本次构建分发资产 (Assets)：
+            - **[Antigravity-PM-Pure-${{ github.ref_name }}.zip]**：【纯净版】零预装策略、轻量空白母版，适合自由搭建个性化项目与私有业务。
+            - **[Antigravity-PM-Full-${{ github.ref_name }}.zip]**：【完整版】预装 9 大垂直行业专家团 + 18 项实战 Skill + 完整多因子量化与游戏实战案例。
+
+            ### 💡 极速运行指南：
+            1. 下载对应的压缩包并解压到任意文件夹；
+            2. 确保电脑已安装 [Node.js (v18+)](https://nodejs.org/)；
+            3. 双击运行 `run.bat`，即可享受沉浸式多智能体协同管理看板！
+
+            ---
+            *本发布包由 GitHub Actions 云端全自动编译与打包生成。*
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
