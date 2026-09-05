@@ -567,6 +567,7 @@ export default function App() {
   const [logLoading, setLogLoading] = useState(false);
   const [logAutoScroll, setLogAutoScroll] = useState(true);
   const terminalEndRef = useRef(null);
+  const scrollRafRef = useRef(null);
   // IDE 对话历史记录 (读取 Antigravity IDE brain 目录下的 transcript)
   const [ideConversationLogs, setIdeConversationLogs] = useState([]);
   const [logTab, setLogTab] = useState('ide'); // 'ide' 对话历史 | 'pm2' PM2运行日志
@@ -1779,14 +1780,18 @@ export default function App() {
         ::-webkit-scrollbar-track { background: transparent; }
 
         .glass-card {
-          background: rgba(23, 26, 36, 0.78);
-          backdrop-filter: blur(14px);
+          background: #111524;
           border: 1px solid rgba(255, 255, 255, 0.08);
           border-radius: 12px;
-          transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+          contain: layout paint style;
+          content-visibility: auto;
+          contain-intrinsic-size: auto 120px;
+          transform: translateZ(0);
+          transition: border-color 0.15s ease, box-shadow 0.15s ease;
         }
         .glass-card:hover {
           border-color: rgba(255, 255, 255, 0.18);
+          box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
         }
 
         .btn {
@@ -3822,7 +3827,7 @@ export default function App() {
                   </div>
 
                   {/* 笔记卡片滚动列表 */}
-                  <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <div className="scroll-container" style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '8px', transform: 'translateZ(0)', willChange: 'scroll-position', overscrollBehaviorY: 'contain' }}>
                     {knowledgeData.categories?.flatMap(cat => {
                       if (activeCategoryFilter !== 'ALL' && cat.categoryName !== activeCategoryFilter) return [];
                       return (cat.files || []).map(file => ({ ...file, categoryTitle: cat.title }));
@@ -4320,7 +4325,7 @@ export default function App() {
                         flexDirection: 'column',
                         justifyContent: 'space-between',
                         gap: '14px',
-                        transition: 'all 0.2s',
+                        transition: 'border-color 0.15s ease',
                         boxShadow: isEnabled ? '0 4px 20px rgba(0,0,0,0.3)' : 'none'
                       }}>
                         <div>
@@ -4673,7 +4678,7 @@ export default function App() {
                         flexDirection: 'column',
                         justifyContent: 'space-between',
                         gap: '10px',
-                        transition: 'all 0.2s',
+                        transition: 'border-color 0.15s ease',
                         boxShadow: isEnabled ? '0 4px 16px rgba(0,0,0,0.25)' : 'none'
                       }}>
                         <div>
@@ -4905,7 +4910,10 @@ export default function App() {
             flex: 1,
             overflowY: 'auto',
             minHeight: 0,
-            padding: '14px 16px 40px 16px'
+            padding: '14px 16px 40px 16px',
+            transform: 'translateZ(0)',
+            willChange: 'scroll-position',
+            overscrollBehaviorY: 'contain'
           }}>
             {/* 顶部系统核心监控 KPI 指标卡 */}
             <div style={{
@@ -5763,13 +5771,18 @@ ${skill.detailedDesc || skill.desc || ''}`}
                   }
                 }}
                 onScroll={(e) => {
+                  if (scrollRafRef.current) return;
                   const target = e.currentTarget;
-                  const isNearBottom = target.scrollHeight - target.scrollTop - target.clientHeight < 60;
-                  if (!isNearBottom && logAutoScroll) {
-                    setLogAutoScroll(false);
-                  } else if (isNearBottom && !logAutoScroll) {
-                    setLogAutoScroll(true);
-                  }
+                  scrollRafRef.current = requestAnimationFrame(() => {
+                    scrollRafRef.current = null;
+                    if (!target) return;
+                    const isNearBottom = target.scrollHeight - target.scrollTop - target.clientHeight < 60;
+                    if (!isNearBottom && logAutoScroll) {
+                      setLogAutoScroll(false);
+                    } else if (isNearBottom && !logAutoScroll) {
+                      setLogAutoScroll(true);
+                    }
+                  });
                 }}
                 style={{
                   flex: '1 1 0%',
