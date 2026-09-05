@@ -4,21 +4,71 @@ const fs = require('fs');
 const os = require('os');
 const { execSync, spawn, execFile } = require('child_process');
 
-const DEBUG_LOG_PATH = path.join(os.homedir(), 'AppData', 'Roaming', 'Antigravity-PM', 'app.log');
-function debugLog(msg) {
+// ================= 全局智能双轨错误日志与诊断系统 =================
+// 1. 程序所在目录直观日志（方便用户双击查看，无需翻找深层隐藏目录）
+const APP_EXE_DIR = app.isPackaged ? path.dirname(process.execPath) : path.join(__dirname);
+const LOCAL_ERROR_LOG = path.join(APP_EXE_DIR, 'error.log');
+const LOCAL_RUN_LOG = path.join(APP_EXE_DIR, 'app.log');
+
+// 2. 系统漫游目录备份日志（确保全系统生命周期永久可追溯）
+const ROAMING_LOG_DIR = path.join(os.homedir(), 'AppData', 'Roaming', 'Antigravity-PM');
+const ROAMING_ERROR_LOG = path.join(ROAMING_LOG_DIR, 'error.log');
+const ROAMING_RUN_LOG = path.join(ROAMING_LOG_DIR, 'app.log');
+
+function writeLogFile(filePath, text) {
   try {
-    const dir = path.dirname(DEBUG_LOG_PATH);
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-    fs.appendFileSync(DEBUG_LOG_PATH, `[${new Date().toISOString()}] ${msg}\n`);
+    const pdir = path.dirname(filePath);
+    if (!fs.existsSync(pdir)) fs.mkdirSync(pdir, { recursive: true });
+    fs.appendFileSync(filePath, text, 'utf-8');
   } catch(e) {}
 }
-debugLog('=== main.cjs loaded === argv: ' + JSON.stringify(process.argv));
+
+function debugLog(msg) {
+  const line = `[${new Date().toLocaleString('zh-CN', { hour12: false })}] ${msg}\n`;
+  writeLogFile(LOCAL_RUN_LOG, line);
+  writeLogFile(ROAMING_RUN_LOG, line);
+}
+
+function logError(title, errorOrReason, suggestions = []) {
+  const timestamp = new Date().toLocaleString('zh-CN', { hour12: false });
+  const stack = errorOrReason ? (errorOrReason.stack || errorOrReason.message || String(errorOrReason)) : '未知异常详情';
+  const reasonText = errorOrReason && errorOrReason.message ? errorOrReason.message : String(errorOrReason);
+  
+  let suggestionBlock = '';
+  if (suggestions && suggestions.length > 0) {
+    suggestionBlock = '\n【排错专家建议】:\n' + suggestions.map((s, idx) => `  ${idx + 1}. ${s}`).join('\n');
+  }
+
+  const logEntry = `
+================================================================================
+【发生时间】: ${timestamp}
+【错误类型】: ${title}
+【异常原因】: ${reasonText}
+${suggestionBlock}
+【技术堆栈详情】:
+${stack}
+================================================================================\n`;
+
+  console.error(logEntry);
+  writeLogFile(LOCAL_ERROR_LOG, logEntry);
+  writeLogFile(ROAMING_ERROR_LOG, logEntry);
+  debugLog(`[ERROR] ${title} - ${reasonText}`);
+}
+
+debugLog('=== Antigravity-PM main.cjs loaded === argv: ' + JSON.stringify(process.argv));
 
 process.on('uncaughtException', (err) => {
-  debugLog('uncaughtException: ' + (err ? err.stack || err.message : 'unknown'));
+  logError('主进程未捕获异常 (Uncaught Exception)', err, [
+    '通常由底层库路径冲突或运行环境缺失引起；',
+    '请检查本地 Node.js / PM2 或 Python 依赖环境是否健全。'
+  ]);
 });
+
 process.on('unhandledRejection', (reason) => {
-  debugLog('unhandledRejection: ' + (reason ? reason.stack || reason.message : 'unknown'));
+  logError('主进程异步未处理拒绝 (Unhandled Rejection)', reason, [
+    '异步网络或文件 IO 操作超时未捕获；',
+    '请检查对应的项目目录权限与网络防火墙状态。'
+  ]);
 });
 
 let pm2 = null;
@@ -62,7 +112,28 @@ debugLog('Requesting single instance lock...');
 const gotTheLock = app.requestSingleInstanceLock();
 debugLog('Got lock: ' + gotTheLock);
 if (!gotTheLock) {
-  debugLog('No lock, quitting...');
+  const errMsg = '检测到已有另一个 Antigravity-PM 实例正在后台运行，或上次关闭未完全释放互斥锁。';
+  logError('启动受阻 / 单实例互斥锁冲突 (Lock Contention)', errMsg, [
+    '请打开 Windows 任务管理器，结束名为 Antigravity-PM.exe 的旧进程后重试；',
+    '或在软件目录下双击「一键清理残留并启动.bat」；',
+    '已为您自动将诊断信息记录至当前目录下的 error.log 中。'
+  ]);
+
+  try {
+    const { dialog } = require('electron');
+    const choice = dialog.showMessageBoxSync({
+      type: 'warning',
+      title: 'Antigravity-PM 启动拦截提示',
+      message: '程序已在后台运行中，或上次关闭时有残留进程占用互斥锁。',
+      detail: '已为您将详细排错诊断记录写入当前目录下的 error.log。\n\n【一秒解决办法】：\n1. 请检查任务栏或系统托盘是否已有窗口；\n2. 打开任务管理器结束旧的 Antigravity-PM.exe 进程后重新打开；\n3. 或直接双击程序同级目录下的「一键清理残留并启动.bat」。',
+      buttons: ['打开错误日志查看', '退出程序'],
+      defaultId: 0
+    });
+    if (choice === 0) {
+      shell.openPath(fs.existsSync(LOCAL_ERROR_LOG) ? LOCAL_ERROR_LOG : ROAMING_ERROR_LOG);
+    }
+  } catch (e) {}
+
   app.quit();
   process.exit(0);
 }
@@ -147,7 +218,7 @@ function setupChineseApplicationMenu() {
           label: '连接并启动 Antigravity IDE(&I)',
           accelerator: 'CmdOrCtrl+Shift+I',
           click: () => {
-            openInAntigravityIde('./workspace');
+            openInAntigravityIde(path.join(os.homedir(), 'Desktop', 'quant'));
           }
         },
         { type: 'separator' },
@@ -517,7 +588,7 @@ ipcMain.handle('pm2-batch-start', async (event, { projects, concurrency = 2 }) =
 ipcMain.handle('export-skills-agents-to-ide', async (event, data) => {
   try {
     const { expertTeams = [], skills = [], targetDir } = data || {};
-    const scratchDir = targetDir || './workspace\\scratch';
+    const scratchDir = targetDir || path.join(os.homedir(), 'Desktop', 'quant', 'scratch');
     if (!fs.existsSync(scratchDir)) {
       try { fs.mkdirSync(scratchDir, { recursive: true }); } catch (e) {}
     }
@@ -570,7 +641,7 @@ ipcMain.handle('export-skills-agents-to-ide', async (event, data) => {
 
     // 同时写一份到用户全局配置根目录
     try {
-      const globalConfigDir = path.join(os.homedir(), '.gemini'\\config';
+      const globalConfigDir = path.join(os.homedir(), '.gemini', 'config');
       if (fs.existsSync(globalConfigDir)) {
         fs.writeFileSync(path.join(globalConfigDir, 'ANTIGRAVITY_TEAM_EDITOR.md'), md, 'utf-8');
       }
@@ -657,8 +728,8 @@ ipcMain.handle('ide-conversation-logs', async (event, projectName) => {
       const candidates = [
         path.join(__dirname, 'get_ide_logs.py'),
         path.join(process.cwd(), 'get_ide_logs.py'),
-        './workspace\\scratch\\antigravity-pm\\get_ide_logs.py',
-        './projects\\Antigravity-PM\\resources\\app\\get_ide_logs.py'
+        path.join(__dirname, 'get_ide_logs.py'),
+        path.join(__dirname, 'get_ide_logs.py')
       ];
       let scriptPath = candidates.find(p => fs.existsSync(p));
       debugLog(`[ide-conversation-logs] querying logs for ${projectName}, script: ${scriptPath}`);
@@ -764,7 +835,7 @@ ipcMain.handle('system-heal', async () => {
 });
 
 // ================= 🧠 投研知识库与腾讯 ima 直连体系 =================
-const KNOWLEDGE_VAULT_DIR = './workspace\\knowledge_vault';
+const KNOWLEDGE_VAULT_DIR = path.join(os.homedir(), 'Desktop', 'quant', 'knowledge_vault');
 
 // 获取本地智库所有文件结构
 ipcMain.handle('knowledge-get-files', async () => {
@@ -908,7 +979,7 @@ ipcMain.handle('knowledge-create-note', async (event, { categoryName, title, con
 
 // 获取腾讯 ima.copilot 真实云端知识库列表与剪藏条目
 ipcMain.handle('knowledge-ima-get-items', async () => {
-  const imaSkillPath = path.join(os.homedir(), '.gemini'\\config\\skills\\ima-skill\\ima_api.cjs';
+  const imaSkillPath = path.join(os.homedir(), '.gemini', 'config', 'skills', 'ima-skill', 'ima_api.cjs');
   if (!fs.existsSync(imaSkillPath)) {
     return { success: false, error: '未安装 ima-skill 模块' };
   }
@@ -952,5 +1023,28 @@ ipcMain.handle('knowledge-ima-import-note', async (event, { title, mediaId }) =>
     return { success: true, path: targetPath, message: `已成功将「${safeTitle}」导入本地智库！` };
   } catch (err) {
     return { success: false, error: err.message };
+  }
+});
+
+// 错误日志查看与一键清理残存锁 IPC
+ipcMain.handle('open-error-log', async () => {
+  const target = fs.existsSync(LOCAL_ERROR_LOG) ? LOCAL_ERROR_LOG : (fs.existsSync(LOCAL_RUN_LOG) ? LOCAL_RUN_LOG : ROAMING_ERROR_LOG);
+  try {
+    if (!fs.existsSync(target)) {
+      writeLogFile(target, `[${new Date().toLocaleString('zh-CN', { hour12: false })}] 暂无严重错误，系统运行正常！\n`);
+    }
+    await shell.openPath(target);
+    return { success: true, path: target };
+  } catch (err) {
+    return { success: false, message: err.message };
+  }
+});
+
+ipcMain.handle('clean-residual-locks', async () => {
+  try {
+    execSync('taskkill /F /IM Antigravity-PM.exe /FI "PID ne ' + process.pid + '"', { windowsHide: true });
+    return { success: true, message: '已成功清理除当前窗口外的所有潜在残留进程！' };
+  } catch (e) {
+    return { success: true, message: '未发现冲突进程，环境正常。' };
   }
 });

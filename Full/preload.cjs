@@ -1,6 +1,8 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('electronAPI', {
+  openErrorLog: () => ipcRenderer.invoke('open-error-log'),
+  cleanResidualLocks: () => ipcRenderer.invoke('clean-residual-locks'),
   pm2List: () => ipcRenderer.invoke('pm2-list'),
   pm2Action: (action, processName) => ipcRenderer.invoke('pm2-action', { action, processName }),
   pm2Logs: (arg, lines = 80) => ipcRenderer.invoke('pm2-logs', typeof arg === 'string' ? { processName: arg, lines } : arg),
