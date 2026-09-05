@@ -387,7 +387,155 @@ const isQuantProject = (proj) => {
 
 export default function App() {
   // 视图切换：'kanban' (看板) | 'gantt' (甘特图) | 'list' (清单) | 'table' (表格) | 'archive' (档案馆) | 'skills' (Skill/MCP生态) | 'monitor' (系统监控)
-  const [skillsDisplayMode, setSkillsDisplayMode] = useState('cards'); // 'cards' | 'list'
+    const [skillsDisplayMode, setSkillsDisplayMode] = useState('cards'); // 'cards' | 'list'
+
+  // 9. 技能与专家团动态管理（支持前方勾选、禁用/启用、删除与持久化）
+  const [expertTeamsList, setExpertTeamsList] = useState(() => {
+    try {
+      const saved = localStorage.getItem('antigravity_expert_teams');
+      if (saved) return JSON.parse(saved);
+    } catch (e) {}
+    return AVAILABLE_EXPERT_TEAMS.map(t => ({ ...t, enabled: true }));
+  });
+
+  const [skillsList, setSkillsList] = useState(() => {
+    try {
+      const saved = localStorage.getItem('antigravity_skills');
+      if (saved) return JSON.parse(saved);
+    } catch (e) {}
+    return AVAILABLE_SKILLS.map(s => ({ ...s, enabled: true }));
+  });
+
+  // 勾选集合 (批量操作)
+  const [selectedTeamIds, setSelectedTeamIds] = useState(new Set());
+  const [selectedSkillIds, setSelectedSkillIds] = useState(new Set());
+
+  const saveExpertTeams = (newList) => {
+    setExpertTeamsList(newList);
+    try {
+      localStorage.setItem('antigravity_expert_teams', JSON.stringify(newList));
+    } catch (e) {}
+  };
+
+  const saveSkills = (newList) => {
+    setSkillsList(newList);
+    try {
+      localStorage.setItem('antigravity_skills', JSON.stringify(newList));
+    } catch (e) {}
+  };
+
+  // 专家团单项 禁用/启用
+  const handleToggleTeamEnabled = (teamId) => {
+    const updated = expertTeamsList.map(t => {
+      if (t.id === teamId) {
+        const next = t.enabled !== false ? false : true;
+        notify(next ? `✅ 已启用专家团「${t.name}」` : `⏸️ 已停用专家团「${t.name}」(项目中暂停调用)`);
+        return { ...t, enabled: next };
+      }
+      return t;
+    });
+    saveExpertTeams(updated);
+  };
+
+  // 专家团单项 删除
+  const handleDeleteTeam = (teamId) => {
+    const target = expertTeamsList.find(t => t.id === teamId);
+    if (!target) return;
+    if (window.confirm(`确定要从管理面板中删除专家团「${target.name}」吗？\n可在右上角随时一键「恢复默认预设」。`)) {
+      const updated = expertTeamsList.filter(t => t.id !== teamId);
+      saveExpertTeams(updated);
+      setSelectedTeamIds(prev => {
+        const n = new Set(prev);
+        n.delete(teamId);
+        return n;
+      });
+      notify(`🗑️ 已删除专家团「${target.name}」`);
+    }
+  };
+
+  // 专家团批量 禁用/启用/删除
+  const handleBatchTeamAction = (action) => {
+    if (selectedTeamIds.size === 0) return;
+    if (action === 'enable') {
+      const updated = expertTeamsList.map(t => selectedTeamIds.has(t.id) ? { ...t, enabled: true } : t);
+      saveExpertTeams(updated);
+      notify(`✅ 已批量启用 ${selectedTeamIds.size} 组专家团`);
+    } else if (action === 'disable') {
+      const updated = expertTeamsList.map(t => selectedTeamIds.has(t.id) ? { ...t, enabled: false } : t);
+      saveExpertTeams(updated);
+      notify(`⏸️ 已批量停用 ${selectedTeamIds.size} 组专家团`);
+    } else if (action === 'delete') {
+      if (window.confirm(`确定要删除选中的 ${selectedTeamIds.size} 组专家团吗？可在右上角随时一键恢复。`)) {
+        const updated = expertTeamsList.filter(t => !selectedTeamIds.has(t.id));
+        saveExpertTeams(updated);
+        setSelectedTeamIds(new Set());
+        notify(`🗑️ 已批量删除选中的专家团`);
+      }
+    }
+  };
+
+  // 技能单项 禁用/启用
+  const handleToggleSkillEnabled = (skillId) => {
+    const updated = skillsList.map(s => {
+      if (s.id === skillId) {
+        const next = s.enabled !== false ? false : true;
+        notify(next ? `✅ 已启用技能「${s.name}」` : `⏸️ 已停用技能「${s.name}」(项目中暂停调用)`);
+        return { ...s, enabled: next };
+      }
+      return s;
+    });
+    saveSkills(updated);
+  };
+
+  // 技能单项 删除
+  const handleDeleteSkill = (skillId) => {
+    const target = skillsList.find(s => s.id === skillId);
+    if (!target) return;
+    if (window.confirm(`确定要从管理面板中删除技能「${target.name}」吗？\n可在右上角随时一键「恢复默认预设」。`)) {
+      const updated = skillsList.filter(s => s.id !== skillId);
+      saveSkills(updated);
+      setSelectedSkillIds(prev => {
+        const n = new Set(prev);
+        n.delete(skillId);
+        return n;
+      });
+      notify(`🗑️ 已删除技能「${target.name}」`);
+    }
+  };
+
+  // 技能批量 禁用/启用/删除
+  const handleBatchSkillAction = (action) => {
+    if (selectedSkillIds.size === 0) return;
+    if (action === 'enable') {
+      const updated = skillsList.map(s => selectedSkillIds.has(s.id) ? { ...s, enabled: true } : s);
+      saveSkills(updated);
+      notify(`✅ 已批量启用 ${selectedSkillIds.size} 项技能`);
+    } else if (action === 'disable') {
+      const updated = skillsList.map(s => selectedSkillIds.has(s.id) ? { ...s, enabled: false } : s);
+      saveSkills(updated);
+      notify(`⏸️ 已批量停用 ${selectedSkillIds.size} 项技能`);
+    } else if (action === 'delete') {
+      if (window.confirm(`确定要删除选中的 ${selectedSkillIds.size} 项技能吗？可在右上角随时一键恢复。`)) {
+        const updated = skillsList.filter(s => !selectedSkillIds.has(s.id));
+        saveSkills(updated);
+        setSelectedSkillIds(new Set());
+        notify(`🗑️ 已批量删除选中的技能`);
+      }
+    }
+  };
+
+  // 恢复官方初始生态
+  const handleResetToDefaultEco = () => {
+    if (window.confirm("确定要恢复 9 大垂直专家团与全量核心技能为官方初始默认配置吗？")) {
+      const defaultTeams = AVAILABLE_EXPERT_TEAMS.map(t => ({ ...t, enabled: true }));
+      const defaultSkills = AVAILABLE_SKILLS.map(s => ({ ...s, enabled: true }));
+      saveExpertTeams(defaultTeams);
+      saveSkills(defaultSkills);
+      setSelectedTeamIds(new Set());
+      setSelectedSkillIds(new Set());
+      notify("✨ 已成功恢复全部专家团与技能为默认就绪状态！");
+    }
+  };
   const [view, setView] = useState('kanban');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [projects, setProjects] = useState([]);
@@ -901,8 +1049,8 @@ export default function App() {
     notify('🚀 正在生成全景专家团与技能清单并唤醒 Antigravity IDE...');
     try {
       const res = await window.electronAPI.exportSkillsAndAgentsToIde({
-        expertTeams: AVAILABLE_EXPERT_TEAMS,
-        skills: AVAILABLE_SKILLS,
+        expertTeams: expertTeamsList.filter(t => t.enabled !== false),
+        skills: skillsList.filter(s => s.enabled !== false),
         targetDir: ''
       });
       if (res?.success) {
@@ -4043,6 +4191,30 @@ export default function App() {
                     </button>
                   </div>
 
+                  {/* 一键恢复官方预设按钮 */}
+                  <button
+                    type="button"
+                    onClick={handleResetToDefaultEco}
+                    className="btn"
+                    style={{
+                      padding: '7px 14px',
+                      fontSize: '11px',
+                      borderRadius: '6px',
+                      background: 'rgba(255, 255, 255, 0.05)',
+                      borderColor: 'rgba(255, 255, 255, 0.15)',
+                      color: '#cbd5e1',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '5px'
+                    }}
+                    title="恢复所有专家团和技能为官方默认初始配置"
+                  >
+                    <span>🔄</span>
+                    <span>恢复官方默认预设</span>
+                  </button>
+
                   {/* 唤醒 IDE 修改生态配置按钮 */}
                   <button
                     className="btn"
@@ -4072,281 +4244,653 @@ export default function App() {
 
             {/* 1. 九大垂直专家团队板块 */}
             <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap', gap: '8px' }}>
-                <h3 style={{ fontSize: '15px', fontWeight: 700, color: '#e2e8f0', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span>👥</span> 九大垂直专家团队 (Multi-Agent Decision Panels · 领域权威评分 1-5星)
-                </h3>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap', gap: '10px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                  <h3 style={{ fontSize: '15px', fontWeight: 700, color: '#e2e8f0', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span>👥</span> 九大垂直专家团队 (Multi-Agent Decision Panels · 领域权威评分 1-5星)
+                  </h3>
+                  {/* 全选与批量操作栏 */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(0,0,0,0.3)', padding: '3px 10px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.08)' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11.5px', color: '#cbd5e1', cursor: 'pointer', userSelect: 'none' }}>
+                      <input
+                        type="checkbox"
+                        checked={expertTeamsList.length > 0 && selectedTeamIds.size === expertTeamsList.length}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelectedTeamIds(new Set(expertTeamsList.map(t => t.id)));
+                          } else {
+                            setSelectedTeamIds(new Set());
+                          }
+                        }}
+                        style={{ cursor: 'pointer', accentColor: '#a855f7' }}
+                      />
+                      <span>全选本组 ({selectedTeamIds.size}/{expertTeamsList.length})</span>
+                    </label>
+
+                    {selectedTeamIds.size > 0 && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginLeft: '6px' }}>
+                        <button
+                          type="button"
+                          onClick={() => handleBatchTeamAction('enable')}
+                          style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '4px', background: 'rgba(34, 197, 94, 0.25)', border: '1px solid rgba(34, 197, 94, 0.5)', color: '#4ade80', cursor: 'pointer', fontWeight: 600 }}
+                          title="批量恢复启用选中的专家团"
+                        >
+                          ✅ 批量启用
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleBatchTeamAction('disable')}
+                          style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '4px', background: 'rgba(245, 158, 11, 0.25)', border: '1px solid rgba(245, 158, 11, 0.5)', color: '#fbbf24', cursor: 'pointer', fontWeight: 600 }}
+                          title="批量停用选中的专家团（暂停调度但保留配置）"
+                        >
+                          ⏸️ 批量禁用
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleBatchTeamAction('delete')}
+                          style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '4px', background: 'rgba(239, 68, 68, 0.25)', border: '1px solid rgba(239, 68, 68, 0.5)', color: '#f87171', cursor: 'pointer', fontWeight: 600 }}
+                          title="批量从列表中删除选中的专家团"
+                        >
+                          🗑️ 批量删除
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
                 <span style={{ fontSize: '11.5px', color: '#c084fc', fontWeight: 600 }}>
-                  共 {AVAILABLE_EXPERT_TEAMS.length} 组专家智能体圆桌已就绪 · 点击可平滑顺畅下滑浏览
+                  共 {expertTeamsList.length} 组专家智囊团 (活跃中: {expertTeamsList.filter(t => t.enabled !== false).length} 组 · 已停用: {expertTeamsList.filter(t => t.enabled === false).length} 组)
                 </span>
               </div>
 
               {/* 模式 A：大卡片展开视图 */}
               {skillsDisplayMode === 'cards' && (
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(380px, 1fr))', gap: '16px' }}>
-                  {AVAILABLE_EXPERT_TEAMS.map((team) => (
-                    <div key={team.id} className="glass-card" style={{
-                      padding: '18px 20px',
-                      background: 'rgba(15, 23, 42, 0.85)',
-                      borderColor: 'rgba(168, 85, 247, 0.25)',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      justifyContent: 'space-between',
-                      gap: '14px',
-                      transition: 'all 0.2s',
-                      boxShadow: '0 4px 20px rgba(0,0,0,0.3)'
-                    }}>
-                      <div>
-                        {/* 团队头部与名称 */}
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px', marginBottom: '6px' }}>
-                          <div style={{ fontSize: '14px', fontWeight: 700, color: '#f1f5f9', lineHeight: 1.35 }}>
-                            {team.name}
+                  {expertTeamsList.map((team) => {
+                    const isEnabled = team.enabled !== false;
+                    const isChecked = selectedTeamIds.has(team.id);
+                    return (
+                      <div key={team.id} className="glass-card" style={{
+                        padding: '18px 20px',
+                        background: isEnabled ? 'rgba(15, 23, 42, 0.85)' : 'rgba(15, 23, 42, 0.5)',
+                        borderColor: isChecked ? '#a855f7' : (isEnabled ? 'rgba(168, 85, 247, 0.25)' : 'rgba(148, 163, 184, 0.2)'),
+                        borderStyle: isEnabled ? 'solid' : 'dashed',
+                        opacity: isEnabled ? 1 : 0.68,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'space-between',
+                        gap: '14px',
+                        transition: 'all 0.2s',
+                        boxShadow: isEnabled ? '0 4px 20px rgba(0,0,0,0.3)' : 'none'
+                      }}>
+                        <div>
+                          {/* 团队头部与名称 + 勾选框 + 操作按钮 */}
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px', marginBottom: '8px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1 }}>
+                              <input
+                                type="checkbox"
+                                checked={isChecked}
+                                onChange={(e) => {
+                                  setSelectedTeamIds(prev => {
+                                    const n = new Set(prev);
+                                    if (e.target.checked) n.add(team.id);
+                                    else n.delete(team.id);
+                                    return n;
+                                  });
+                                }}
+                                style={{ cursor: 'pointer', accentColor: '#a855f7', width: '15px', height: '15px' }}
+                              />
+                              <div style={{ fontSize: '14px', fontWeight: 700, color: isEnabled ? '#f1f5f9' : '#94a3b8', lineHeight: 1.35 }}>
+                                {team.name}
+                              </div>
+                            </div>
+
+                            {/* 状态指示与单项按钮 */}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              {isEnabled ? (
+                                <span style={{ fontSize: '10px', padding: '2px 7px', borderRadius: '4px', background: 'rgba(34, 197, 94, 0.15)', border: '1px solid rgba(34, 197, 94, 0.35)', color: '#4ade80', fontWeight: 600 }}>
+                                  🟢 活跃
+                                </span>
+                              ) : (
+                                <span style={{ fontSize: '10px', padding: '2px 7px', borderRadius: '4px', background: 'rgba(245, 158, 11, 0.18)', border: '1px solid rgba(245, 158, 11, 0.4)', color: '#fbbf24', fontWeight: 600 }}>
+                                  ⏸️ 已禁用
+                                </span>
+                              )}
+                              <button
+                                type="button"
+                                onClick={() => handleToggleTeamEnabled(team.id)}
+                                style={{
+                                  padding: '2px 8px',
+                                  fontSize: '11px',
+                                  borderRadius: '5px',
+                                  cursor: 'pointer',
+                                  fontWeight: 600,
+                                  background: isEnabled ? 'rgba(245, 158, 11, 0.15)' : 'linear-gradient(135deg, rgba(34, 197, 94, 0.3), rgba(16, 185, 129, 0.4))',
+                                  border: isEnabled ? '1px solid rgba(245, 158, 11, 0.4)' : '1px solid rgba(34, 197, 94, 0.6)',
+                                  color: isEnabled ? '#fbbf24' : '#86efac'
+                                }}
+                                title={isEnabled ? "停用此专家团（不可再被项目调用，但配置随时保留）" : "重新启用此专家团"}
+                              >
+                                {isEnabled ? '⏸️ 禁用' : '✅ 启用'}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteTeam(team.id)}
+                                style={{
+                                  padding: '2px 7px',
+                                  fontSize: '11px',
+                                  borderRadius: '5px',
+                                  cursor: 'pointer',
+                                  background: 'rgba(239, 68, 68, 0.15)',
+                                  border: '1px solid rgba(239, 68, 68, 0.35)',
+                                  color: '#f87171'
+                                }}
+                                title="从列表中删除此专家团"
+                              >
+                                🗑️ 删除
+                              </button>
+                            </div>
                           </div>
-                          <span style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '4px', background: 'rgba(168,85,247,0.2)', color: '#d8b4fe', fontWeight: 600, whiteSpace: 'nowrap' }}>
-                            {team.role}
-                          </span>
-                        </div>
 
-                        {/* 团队 ID */}
-                        <div style={{ fontSize: '11px', color: '#64748b', fontFamily: 'monospace', marginBottom: '10px' }}>
-                          ID: {team.id}
-                        </div>
-
-                        {/* 领域评级与星级评分 (1-5星) */}
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(255,255,255,0.03)', padding: '5px 10px', borderRadius: '6px', marginBottom: '10px' }}>
-                          <span style={{ fontSize: '11px', color: '#94a3b8' }}>
-                            领域: <strong style={{ color: '#38bdf8' }}>{team.domain}</strong>
-                          </span>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                            <span style={{ fontSize: '12px', color: '#facc15', fontWeight: 700, letterSpacing: '0.5px' }}>
-                              {team.stars}
+                          {/* 团队 ID 与角色标签 */}
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                            <span style={{ fontSize: '11px', color: '#64748b', fontFamily: 'monospace' }}>
+                              ID: {team.id}
                             </span>
-                            <span style={{ fontSize: '10px', padding: '1px 5px', borderRadius: '4px', background: 'rgba(250, 204, 21, 0.15)', color: '#fef08a', fontWeight: 600 }}>
-                              领域评级
+                            <span style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '4px', background: 'rgba(168,85,247,0.2)', color: '#d8b4fe', fontWeight: 600 }}>
+                              {team.role}
                             </span>
+                          </div>
+
+                          {/* 领域评级与星级评分 (1-5星) */}
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(255,255,255,0.03)', padding: '5px 10px', borderRadius: '6px', marginBottom: '10px' }}>
+                            <span style={{ fontSize: '11px', color: '#94a3b8' }}>
+                              领域: <strong style={{ color: '#38bdf8' }}>{team.domain}</strong>
+                            </span>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                              <span style={{ fontSize: '12px', color: '#facc15', fontWeight: 700, letterSpacing: '0.5px' }}>
+                                {team.stars}
+                              </span>
+                              <span style={{ fontSize: '10px', padding: '1px 5px', borderRadius: '4px', background: 'rgba(250, 204, 21, 0.15)', color: '#fef08a', fontWeight: 600 }}>
+                                领域评级
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* 专家组成清单 */}
+                          <div style={{ marginBottom: '10px', background: 'rgba(0,0,0,0.28)', padding: '10px 12px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                            <div style={{ fontSize: '11px', color: '#c084fc', fontWeight: 600, marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              <span>👥</span> 专家组成与项目角色清单 ({team.memberList.length} 位专家):
+                            </div>
+                            <ul style={{ margin: 0, paddingLeft: '16px', fontSize: '11px', color: '#cbd5e1', lineHeight: 1.65 }}>
+                              {team.memberList.map((m, mIdx) => (
+                                <li key={mIdx}>{m}</li>
+                              ))}
+                            </ul>
+                          </div>
+
+                          {/* 详细中文功能介绍 */}
+                          <div style={{ fontSize: '11.5px', color: '#94a3b8', lineHeight: 1.65, marginBottom: '10px', wordBreak: 'break-word' }}>
+                            <strong style={{ color: '#e2e8f0' }}>功能与工作流：</strong>{team.detailedDesc}
                           </div>
                         </div>
 
-                        {/* 简单明了的包含哪几个项目或者专家 */}
-                        <div style={{ marginBottom: '10px', background: 'rgba(0,0,0,0.28)', padding: '10px 12px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                          <div style={{ fontSize: '11px', color: '#c084fc', fontWeight: 600, marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                            <span>👥</span> 专家组成与项目角色清单 ({team.memberList.length} 位专家):
+                        {/* 配属技能列表 */}
+                        <div style={{ paddingTop: '10px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                          <div style={{ fontSize: '10.5px', color: '#64748b', marginBottom: '6px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <span>⚡</span> 配属支撑技能清单 ({team.skills.length} 项):
                           </div>
-                          <ul style={{ margin: 0, paddingLeft: '16px', fontSize: '11px', color: '#cbd5e1', lineHeight: 1.65 }}>
-                            {team.memberList.map((m, mIdx) => (
-                              <li key={mIdx}>{m}</li>
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                            {team.skills.map((sk, sIdx) => (
+                              <span key={sIdx} style={{
+                                fontSize: '10.5px',
+                                padding: '3px 8px',
+                                borderRadius: '5px',
+                                background: 'rgba(56, 189, 248, 0.1)',
+                                border: '1px solid rgba(56, 189, 248, 0.25)',
+                                color: '#bae6fd'
+                              }}>
+                                ⚡ {sk}
+                              </span>
                             ))}
-                          </ul>
-                        </div>
-
-                        {/* 详细中文功能文本介绍 (完整展示，绝无遮挡) */}
-                        <div style={{ fontSize: '11.5px', color: '#94a3b8', lineHeight: 1.65, marginBottom: '10px', wordBreak: 'break-word' }}>
-                          <strong style={{ color: '#e2e8f0' }}>功能与工作流：</strong>{team.detailedDesc}
+                          </div>
                         </div>
                       </div>
-
-                      {/* 配属技能列表 */}
-                      <div style={{ paddingTop: '10px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-                        <div style={{ fontSize: '10.5px', color: '#64748b', marginBottom: '6px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}>
-                          <span>⚡</span> 配属支撑技能清单 ({team.skills.length} 项):
-                        </div>
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                          {team.skills.map((sk, sIdx) => (
-                            <span key={sIdx} style={{
-                              fontSize: '10.5px',
-                              padding: '3px 8px',
-                              borderRadius: '5px',
-                              background: 'rgba(56, 189, 248, 0.1)',
-                              border: '1px solid rgba(56, 189, 248, 0.25)',
-                              color: '#bae6fd'
-                            }}>
-                              ⚡ {sk}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
 
               {/* 模式 B：文本条目紧凑视图 (高信息密度清晰列表) */}
               {skillsDisplayMode === 'list' && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                  {AVAILABLE_EXPERT_TEAMS.map((team, idx) => (
-                    <div key={team.id} className="glass-card" style={{
-                      padding: '14px 18px',
-                      background: 'rgba(15, 23, 42, 0.9)',
-                      borderColor: 'rgba(168, 85, 247, 0.3)',
-                      borderRadius: '8px',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '8px',
-                      boxShadow: '0 2px 10px rgba(0,0,0,0.2)'
-                    }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                          <span style={{ fontSize: '13px', background: 'rgba(168, 85, 247, 0.25)', color: '#d8b4fe', padding: '2px 8px', borderRadius: '4px', fontWeight: 700 }}>
-                            #{idx + 1}
-                          </span>
-                          <span style={{ fontSize: '14px', fontWeight: 700, color: '#f8fafc' }}>
-                            {team.name}
-                          </span>
-                          <span style={{ fontSize: '10.5px', color: '#64748b', fontFamily: 'monospace' }}>
-                            ID: {team.id}
-                          </span>
+                  {expertTeamsList.map((team, idx) => {
+                    const isEnabled = team.enabled !== false;
+                    const isChecked = selectedTeamIds.has(team.id);
+                    return (
+                      <div key={team.id} className="glass-card" style={{
+                        padding: '14px 18px',
+                        background: isEnabled ? 'rgba(15, 23, 42, 0.9)' : 'rgba(15, 23, 42, 0.55)',
+                        borderColor: isChecked ? '#a855f7' : (isEnabled ? 'rgba(168, 85, 247, 0.3)' : 'rgba(148, 163, 184, 0.2)'),
+                        borderStyle: isEnabled ? 'solid' : 'dashed',
+                        opacity: isEnabled ? 1 : 0.68,
+                        borderRadius: '8px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '8px',
+                        boxShadow: isEnabled ? '0 2px 10px rgba(0,0,0,0.2)' : 'none'
+                      }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <input
+                              type="checkbox"
+                              checked={isChecked}
+                              onChange={(e) => {
+                                setSelectedTeamIds(prev => {
+                                  const n = new Set(prev);
+                                  if (e.target.checked) n.add(team.id);
+                                  else n.delete(team.id);
+                                  return n;
+                                });
+                              }}
+                              style={{ cursor: 'pointer', accentColor: '#a855f7', width: '15px', height: '15px' }}
+                            />
+                            <span style={{ fontSize: '13px', background: 'rgba(168, 85, 247, 0.25)', color: '#d8b4fe', padding: '2px 8px', borderRadius: '4px', fontWeight: 700 }}>
+                              #{idx + 1}
+                            </span>
+                            <span style={{ fontSize: '14px', fontWeight: 700, color: isEnabled ? '#f8fafc' : '#94a3b8' }}>
+                              {team.name}
+                            </span>
+                            <span style={{ fontSize: '10.5px', color: '#64748b', fontFamily: 'monospace' }}>
+                              ID: {team.id}
+                            </span>
+                            {isEnabled ? (
+                              <span style={{ fontSize: '10px', padding: '1px 6px', borderRadius: '4px', background: 'rgba(34, 197, 94, 0.15)', border: '1px solid rgba(34, 197, 94, 0.35)', color: '#4ade80', fontWeight: 600 }}>
+                                🟢 活跃
+                              </span>
+                            ) : (
+                              <span style={{ fontSize: '10px', padding: '1px 6px', borderRadius: '4px', background: 'rgba(245, 158, 11, 0.18)', border: '1px solid rgba(245, 158, 11, 0.4)', color: '#fbbf24', fontWeight: 600 }}>
+                                ⏸️ 已禁用 (不可调用)
+                              </span>
+                            )}
+                          </div>
+
+                          {/* 评级 + 操作按钮 */}
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <span style={{ fontSize: '11px', color: '#38bdf8', background: 'rgba(56, 189, 248, 0.1)', padding: '2px 8px', borderRadius: '4px' }}>
+                              {team.domain}
+                            </span>
+                            <span style={{ fontSize: '11.5px', color: '#facc15', fontWeight: 700 }}>
+                              {team.stars}
+                            </span>
+                            <span style={{ fontSize: '10.5px', padding: '2px 6px', borderRadius: '4px', background: 'rgba(168, 85, 247, 0.25)', color: '#d8b4fe', fontWeight: 600 }}>
+                              {team.role}
+                            </span>
+
+                            <button
+                              type="button"
+                              onClick={() => handleToggleTeamEnabled(team.id)}
+                              style={{
+                                padding: '2px 8px',
+                                fontSize: '11px',
+                                borderRadius: '5px',
+                                cursor: 'pointer',
+                                fontWeight: 600,
+                                background: isEnabled ? 'rgba(245, 158, 11, 0.15)' : 'linear-gradient(135deg, rgba(34, 197, 94, 0.3), rgba(16, 185, 129, 0.4))',
+                                border: isEnabled ? '1px solid rgba(245, 158, 11, 0.4)' : '1px solid rgba(34, 197, 94, 0.6)',
+                                color: isEnabled ? '#fbbf24' : '#86efac'
+                              }}
+                              title={isEnabled ? "停用此专家团" : "重新启用"}
+                            >
+                              {isEnabled ? '⏸️ 禁用' : '✅ 启用'}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteTeam(team.id)}
+                              style={{
+                                padding: '2px 7px',
+                                fontSize: '11px',
+                                borderRadius: '5px',
+                                cursor: 'pointer',
+                                background: 'rgba(239, 68, 68, 0.15)',
+                                border: '1px solid rgba(239, 68, 68, 0.35)',
+                                color: '#f87171'
+                              }}
+                              title="删除此专家团"
+                            >
+                              🗑️ 删除
+                            </button>
+                          </div>
                         </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <span style={{ fontSize: '11px', color: '#38bdf8', background: 'rgba(56, 189, 248, 0.1)', padding: '2px 8px', borderRadius: '4px' }}>
-                            {team.domain}
-                          </span>
-                          <span style={{ fontSize: '11.5px', color: '#facc15', fontWeight: 700 }}>
-                            {team.stars}
-                          </span>
-                          <span style={{ fontSize: '10.5px', padding: '2px 6px', borderRadius: '4px', background: 'rgba(168, 85, 247, 0.25)', color: '#d8b4fe', fontWeight: 600 }}>
-                            {team.role}
-                          </span>
+
+                        {/* 专家成员清单 */}
+                        <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '6px', fontSize: '11px' }}>
+                          <span style={{ color: '#c084fc', fontWeight: 600 }}>👥 专家组成:</span>
+                          {team.memberList.map((m, mIdx) => (
+                            <span key={mIdx} style={{ background: 'rgba(255,255,255,0.04)', color: '#cbd5e1', padding: '2px 6px', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.08)' }}>
+                              {m}
+                            </span>
+                          ))}
+                        </div>
+
+                        {/* 详细功能工作流 */}
+                        <div style={{ fontSize: '11.5px', color: '#94a3b8', lineHeight: 1.5, wordBreak: 'break-word' }}>
+                          <strong style={{ color: '#e2e8f0' }}>功能与工作流：</strong>{team.detailedDesc}
+                        </div>
+
+                        {/* 配属技能 */}
+                        <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '6px', fontSize: '10.5px' }}>
+                          <span style={{ color: '#64748b', fontWeight: 600 }}>⚡ 配属技能:</span>
+                          {team.skills.map((sk, sIdx) => (
+                            <span key={sIdx} style={{ color: '#7dd3fc', background: 'rgba(56, 189, 248, 0.08)', padding: '2px 6px', borderRadius: '4px' }}>
+                              {sk}
+                            </span>
+                          ))}
                         </div>
                       </div>
-
-                      {/* 专家成员清单 */}
-                      <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '6px', fontSize: '11px' }}>
-                        <span style={{ color: '#c084fc', fontWeight: 600 }}>👥 专家组成:</span>
-                        {team.memberList.map((m, mIdx) => (
-                          <span key={mIdx} style={{ background: 'rgba(255,255,255,0.04)', color: '#cbd5e1', padding: '2px 6px', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.08)' }}>
-                            {m}
-                          </span>
-                        ))}
-                      </div>
-
-                      {/* 详细功能工作流 */}
-                      <div style={{ fontSize: '11.5px', color: '#94a3b8', lineHeight: 1.5, wordBreak: 'break-word' }}>
-                        <strong style={{ color: '#e2e8f0' }}>功能与工作流：</strong>{team.detailedDesc}
-                      </div>
-
-                      {/* 配属技能 */}
-                      <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '6px', fontSize: '10.5px' }}>
-                        <span style={{ color: '#64748b', fontWeight: 600 }}>⚡ 配属技能:</span>
-                        {team.skills.map((sk, sIdx) => (
-                          <span key={sIdx} style={{ color: '#7dd3fc', background: 'rgba(56, 189, 248, 0.08)', padding: '2px 6px', borderRadius: '4px' }}>
-                            {sk}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
 
             {/* 2. 核心底层技能插件矩阵板块 */}
-            <div style={{ marginTop: '10px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap', gap: '8px' }}>
-                <h3 style={{ fontSize: '15px', fontWeight: 700, color: '#e2e8f0', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span>⚡</span> 核心底层技能插件矩阵 (Skill Registry · 英文名称（中文名称）· 领域1-5星打分)
-                </h3>
+            <div style={{ marginTop: '14px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap', gap: '10px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                  <h3 style={{ fontSize: '15px', fontWeight: 700, color: '#e2e8f0', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span>⚡</span> 核心底层技能插件矩阵 (Skill Registry · 英文名称（中文名称）· 领域1-5星打分)
+                  </h3>
+                  {/* 全选与批量操作栏 */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(0,0,0,0.3)', padding: '3px 10px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.08)' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11.5px', color: '#cbd5e1', cursor: 'pointer', userSelect: 'none' }}>
+                      <input
+                        type="checkbox"
+                        checked={skillsList.length > 0 && selectedSkillIds.size === skillsList.length}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelectedSkillIds(new Set(skillsList.map(s => s.id)));
+                          } else {
+                            setSelectedSkillIds(new Set());
+                          }
+                        }}
+                        style={{ cursor: 'pointer', accentColor: '#38bdf8' }}
+                      />
+                      <span>全选本组 ({selectedSkillIds.size}/{skillsList.length})</span>
+                    </label>
+
+                    {selectedSkillIds.size > 0 && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginLeft: '6px' }}>
+                        <button
+                          type="button"
+                          onClick={() => handleBatchSkillAction('enable')}
+                          style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '4px', background: 'rgba(34, 197, 94, 0.25)', border: '1px solid rgba(34, 197, 94, 0.5)', color: '#4ade80', cursor: 'pointer', fontWeight: 600 }}
+                          title="批量恢复启用选中的技能"
+                        >
+                          ✅ 批量启用
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleBatchSkillAction('disable')}
+                          style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '4px', background: 'rgba(245, 158, 11, 0.25)', border: '1px solid rgba(245, 158, 11, 0.5)', color: '#fbbf24', cursor: 'pointer', fontWeight: 600 }}
+                          title="批量停用选中的技能（项目中不可调用，但配置随时保留）"
+                        >
+                          ⏸️ 批量禁用
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleBatchSkillAction('delete')}
+                          style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '4px', background: 'rgba(239, 68, 68, 0.25)', border: '1px solid rgba(239, 68, 68, 0.5)', color: '#f87171', cursor: 'pointer', fontWeight: 600 }}
+                          title="批量从列表中删除选中的技能"
+                        >
+                          🗑️ 批量删除
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
                 <span style={{ fontSize: '11.5px', color: '#38bdf8', fontWeight: 600 }}>
-                  共 {AVAILABLE_SKILLS.length} 项专业级技能已注册 · 可平滑顺畅下滑到底
+                  共 {skillsList.length} 项技能插件 (活跃中: {skillsList.filter(s => s.enabled !== false).length} 项 · 已停用: {skillsList.filter(s => s.enabled === false).length} 项)
                 </span>
               </div>
 
               {/* 模式 A：大卡片展开视图 */}
               {skillsDisplayMode === 'cards' && (
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(380px, 1fr))', gap: '14px' }}>
-                  {AVAILABLE_SKILLS.map((s) => (
-                    <div key={s.id} className="glass-card" style={{
-                      padding: '16px 18px',
-                      borderRadius: '10px',
-                      background: 'rgba(15, 23, 42, 0.85)',
-                      borderColor: 'rgba(56, 189, 248, 0.25)',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      justifyContent: 'space-between',
-                      gap: '10px',
-                      transition: 'all 0.2s',
-                      boxShadow: '0 4px 16px rgba(0,0,0,0.25)'
-                    }}>
-                      <div>
-                        {/* 标题：严格规范为 英文名称（中文名称） */}
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px', marginBottom: '4px' }}>
-                          <div style={{ fontSize: '13.5px', fontWeight: 700, color: '#f1f5f9', lineHeight: 1.35 }}>
-                            {s.name}
-                          </div>
-                          <span style={{ fontSize: '10px', padding: '2px 7px', borderRadius: '4px', background: 'rgba(59,130,246,0.18)', color: '#60a5fa', fontWeight: 600, whiteSpace: 'nowrap' }}>
-                            {s.type}
-                          </span>
-                        </div>
+                  {skillsList.map((s) => {
+                    const isEnabled = s.enabled !== false;
+                    const isChecked = selectedSkillIds.has(s.id);
+                    return (
+                      <div key={s.id} className="glass-card" style={{
+                        padding: '16px 18px',
+                        borderRadius: '10px',
+                        background: isEnabled ? 'rgba(15, 23, 42, 0.85)' : 'rgba(15, 23, 42, 0.5)',
+                        borderColor: isChecked ? '#38bdf8' : (isEnabled ? 'rgba(56, 189, 248, 0.25)' : 'rgba(148, 163, 184, 0.2)'),
+                        borderStyle: isEnabled ? 'solid' : 'dashed',
+                        opacity: isEnabled ? 1 : 0.68,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'space-between',
+                        gap: '10px',
+                        transition: 'all 0.2s',
+                        boxShadow: isEnabled ? '0 4px 16px rgba(0,0,0,0.25)' : 'none'
+                      }}>
+                        <div>
+                          {/* 标题 + 勾选框 + 操作按钮 */}
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px', marginBottom: '8px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1 }}>
+                              <input
+                                type="checkbox"
+                                checked={isChecked}
+                                onChange={(e) => {
+                                  setSelectedSkillIds(prev => {
+                                    const n = new Set(prev);
+                                    if (e.target.checked) n.add(s.id);
+                                    else n.delete(s.id);
+                                    return n;
+                                  });
+                                }}
+                                style={{ cursor: 'pointer', accentColor: '#38bdf8', width: '15px', height: '15px' }}
+                              />
+                              <div style={{ fontSize: '13.5px', fontWeight: 700, color: isEnabled ? '#f1f5f9' : '#94a3b8', lineHeight: 1.35 }}>
+                                {s.name}
+                              </div>
+                            </div>
 
-                        {/* 领域评级与星级评分 (1-5星) */}
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(255,255,255,0.03)', padding: '5px 10px', borderRadius: '5px', margin: '6px 0 10px' }}>
-                          <span style={{ fontSize: '11px', color: '#94a3b8' }}>
-                            领域: <strong style={{ color: '#38bdf8' }}>{s.domain}</strong>
-                          </span>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                            <span style={{ fontSize: '11.5px', color: '#facc15', fontWeight: 700, letterSpacing: '0.5px' }}>
-                              {s.stars}
+                            {/* 状态与单项操作按钮 */}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              {isEnabled ? (
+                                <span style={{ fontSize: '10px', padding: '2px 7px', borderRadius: '4px', background: 'rgba(34, 197, 94, 0.15)', border: '1px solid rgba(34, 197, 94, 0.35)', color: '#4ade80', fontWeight: 600 }}>
+                                  🟢 活跃
+                                </span>
+                              ) : (
+                                <span style={{ fontSize: '10px', padding: '2px 7px', borderRadius: '4px', background: 'rgba(245, 158, 11, 0.18)', border: '1px solid rgba(245, 158, 11, 0.4)', color: '#fbbf24', fontWeight: 600 }}>
+                                  ⏸️ 已禁用
+                                </span>
+                              )}
+                              <button
+                                type="button"
+                                onClick={() => handleToggleSkillEnabled(s.id)}
+                                style={{
+                                  padding: '2px 8px',
+                                  fontSize: '11px',
+                                  borderRadius: '5px',
+                                  cursor: 'pointer',
+                                  fontWeight: 600,
+                                  background: isEnabled ? 'rgba(245, 158, 11, 0.15)' : 'linear-gradient(135deg, rgba(34, 197, 94, 0.3), rgba(16, 185, 129, 0.4))',
+                                  border: isEnabled ? '1px solid rgba(245, 158, 11, 0.4)' : '1px solid rgba(34, 197, 94, 0.6)',
+                                  color: isEnabled ? '#fbbf24' : '#86efac'
+                                }}
+                                title={isEnabled ? "停用此技能（不可再被策略调用，但保留在列表中随时可重新启用）" : "重新启用此技能"}
+                              >
+                                {isEnabled ? '⏸️ 禁用' : '✅ 启用'}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteSkill(s.id)}
+                                style={{
+                                  padding: '2px 7px',
+                                  fontSize: '11px',
+                                  borderRadius: '5px',
+                                  cursor: 'pointer',
+                                  background: 'rgba(239, 68, 68, 0.15)',
+                                  border: '1px solid rgba(239, 68, 68, 0.35)',
+                                  color: '#f87171'
+                                }}
+                                title="从列表中删除此技能"
+                              >
+                                🗑️ 删除
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* 分类标签 */}
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                            <span style={{ fontSize: '10.5px', color: '#64748b', fontFamily: 'monospace' }}>
+                              插件ID: {s.id}
+                            </span>
+                            <span style={{ fontSize: '10px', padding: '2px 7px', borderRadius: '4px', background: 'rgba(59,130,246,0.18)', color: '#60a5fa', fontWeight: 600 }}>
+                              {s.type}
                             </span>
                           </div>
+
+                          {/* 领域评级与星级评分 (1-5星) */}
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(255,255,255,0.03)', padding: '5px 10px', borderRadius: '5px', margin: '6px 0 10px' }}>
+                            <span style={{ fontSize: '11px', color: '#94a3b8' }}>
+                              领域: <strong style={{ color: '#38bdf8' }}>{s.domain}</strong>
+                            </span>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              <span style={{ fontSize: '11.5px', color: '#facc15', fontWeight: 700, letterSpacing: '0.5px' }}>
+                                {s.stars}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* 详细中文功能文本介绍 */}
+                          <div style={{ fontSize: '11.5px', color: '#cbd5e1', lineHeight: 1.6, wordBreak: 'break-word' }}>
+                            {s.desc}
+                          </div>
                         </div>
 
-                        {/* 详细中文功能文本介绍 (完整展示) */}
-                        <div style={{ fontSize: '11.5px', color: '#cbd5e1', lineHeight: 1.6, wordBreak: 'break-word' }}>
-                          {s.desc}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '10px', borderTop: '1px solid rgba(255,255,255,0.06)', fontSize: '10.5px', color: '#64748b' }}>
+                          <span>{isEnabled ? '✓ 活跃随时可调度' : '⏸️ 暂停调用中'}</span>
+                          <span style={{ color: isEnabled ? '#38bdf8' : '#94a3b8', fontWeight: 500 }}>
+                            {isEnabled ? '• 开箱即用 · 零占位符' : '• 随时一键重新启用'}
+                          </span>
                         </div>
                       </div>
-
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '10px', borderTop: '1px solid rgba(255,255,255,0.06)', fontSize: '10.5px', color: '#64748b' }}>
-                        <span style={{ fontFamily: 'monospace' }}>插件ID: {s.id}</span>
-                        <span style={{ color: '#38bdf8', fontWeight: 500 }}>✓ 开箱即用 · 零占位符</span>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
 
               {/* 模式 B：文本条目紧凑视图 (高信息密度清晰列表) */}
               {skillsDisplayMode === 'list' && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  {AVAILABLE_SKILLS.map((s, idx) => (
-                    <div key={s.id} className="glass-card" style={{
-                      padding: '12px 16px',
-                      background: 'rgba(15, 23, 42, 0.9)',
-                      borderColor: 'rgba(56, 189, 248, 0.25)',
-                      borderRadius: '8px',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '6px',
-                      boxShadow: '0 2px 8px rgba(0,0,0,0.18)'
-                    }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <span style={{ fontSize: '12px', background: 'rgba(56, 189, 248, 0.2)', color: '#7dd3fc', padding: '2px 7px', borderRadius: '4px', fontWeight: 700 }}>
-                            #{idx + 1}
-                          </span>
-                          <span style={{ fontSize: '13px', fontWeight: 700, color: '#f1f5f9' }}>
-                            {s.name}
-                          </span>
-                          <span style={{ fontSize: '10.5px', color: '#64748b', fontFamily: 'monospace' }}>
-                            ID: {s.id}
-                          </span>
+                  {skillsList.map((s, idx) => {
+                    const isEnabled = s.enabled !== false;
+                    const isChecked = selectedSkillIds.has(s.id);
+                    return (
+                      <div key={s.id} className="glass-card" style={{
+                        padding: '12px 16px',
+                        background: isEnabled ? 'rgba(15, 23, 42, 0.9)' : 'rgba(15, 23, 42, 0.55)',
+                        borderColor: isChecked ? '#38bdf8' : (isEnabled ? 'rgba(56, 189, 248, 0.25)' : 'rgba(148, 163, 184, 0.2)'),
+                        borderStyle: isEnabled ? 'solid' : 'dashed',
+                        opacity: isEnabled ? 1 : 0.68,
+                        borderRadius: '8px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '6px',
+                        boxShadow: isEnabled ? '0 2px 8px rgba(0,0,0,0.18)' : 'none'
+                      }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <input
+                              type="checkbox"
+                              checked={isChecked}
+                              onChange={(e) => {
+                                setSelectedSkillIds(prev => {
+                                  const n = new Set(prev);
+                                  if (e.target.checked) n.add(s.id);
+                                  else n.delete(s.id);
+                                  return n;
+                                });
+                              }}
+                              style={{ cursor: 'pointer', accentColor: '#38bdf8', width: '15px', height: '15px' }}
+                            />
+                            <span style={{ fontSize: '12px', background: 'rgba(56, 189, 248, 0.2)', color: '#7dd3fc', padding: '2px 7px', borderRadius: '4px', fontWeight: 700 }}>
+                              #{idx + 1}
+                            </span>
+                            <span style={{ fontSize: '13px', fontWeight: 700, color: isEnabled ? '#f1f5f9' : '#94a3b8' }}>
+                              {s.name}
+                            </span>
+                            <span style={{ fontSize: '10.5px', color: '#64748b', fontFamily: 'monospace' }}>
+                              ID: {s.id}
+                            </span>
+                            {isEnabled ? (
+                              <span style={{ fontSize: '10px', padding: '1px 6px', borderRadius: '4px', background: 'rgba(34, 197, 94, 0.15)', border: '1px solid rgba(34, 197, 94, 0.35)', color: '#4ade80', fontWeight: 600 }}>
+                                🟢 活跃
+                              </span>
+                            ) : (
+                              <span style={{ fontSize: '10px', padding: '1px 6px', borderRadius: '4px', background: 'rgba(245, 158, 11, 0.18)', border: '1px solid rgba(245, 158, 11, 0.4)', color: '#fbbf24', fontWeight: 600 }}>
+                                ⏸️ 已禁用 (不可调用)
+                              </span>
+                            )}
+                          </div>
+
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <span style={{ fontSize: '10.5px', color: '#94a3b8' }}>
+                              领域: {s.domain}
+                            </span>
+                            <span style={{ fontSize: '11px', color: '#facc15', fontWeight: 700 }}>
+                              {s.stars}
+                            </span>
+                            <span style={{ fontSize: '10px', padding: '2px 6px', borderRadius: '4px', background: 'rgba(59,130,246,0.2)', color: '#60a5fa', fontWeight: 600 }}>
+                              {s.type}
+                            </span>
+
+                            <button
+                              type="button"
+                              onClick={() => handleToggleSkillEnabled(s.id)}
+                              style={{
+                                padding: '2px 8px',
+                                fontSize: '11px',
+                                borderRadius: '5px',
+                                cursor: 'pointer',
+                                fontWeight: 600,
+                                background: isEnabled ? 'rgba(245, 158, 11, 0.15)' : 'linear-gradient(135deg, rgba(34, 197, 94, 0.3), rgba(16, 185, 129, 0.4))',
+                                border: isEnabled ? '1px solid rgba(245, 158, 11, 0.4)' : '1px solid rgba(34, 197, 94, 0.6)',
+                                color: isEnabled ? '#fbbf24' : '#86efac'
+                              }}
+                              title={isEnabled ? "停用此技能" : "重新启用"}
+                            >
+                              {isEnabled ? '⏸️ 禁用' : '✅ 启用'}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteSkill(s.id)}
+                              style={{
+                                padding: '2px 7px',
+                                fontSize: '11px',
+                                borderRadius: '5px',
+                                cursor: 'pointer',
+                                background: 'rgba(239, 68, 68, 0.15)',
+                                border: '1px solid rgba(239, 68, 68, 0.35)',
+                                color: '#f87171'
+                              }}
+                              title="删除此技能"
+                            >
+                              🗑️ 删除
+                            </button>
+                          </div>
                         </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <span style={{ fontSize: '10.5px', color: '#94a3b8' }}>
-                            领域: {s.domain}
-                          </span>
-                          <span style={{ fontSize: '11px', color: '#facc15', fontWeight: 700 }}>
-                            {s.stars}
-                          </span>
-                          <span style={{ fontSize: '10px', padding: '2px 6px', borderRadius: '4px', background: 'rgba(59,130,246,0.2)', color: '#60a5fa', fontWeight: 600 }}>
-                            {s.type}
-                          </span>
+                        <div style={{ fontSize: '11.5px', color: '#cbd5e1', lineHeight: 1.5, wordBreak: 'break-word' }}>
+                          {s.desc}
                         </div>
                       </div>
-                      <div style={{ fontSize: '11.5px', color: '#cbd5e1', lineHeight: 1.5, wordBreak: 'break-word' }}>
-                        {s.desc}
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -5050,7 +5594,7 @@ ${team.detailedDesc || team.desc || ''}`}
                     ⚡ 选择挂载技能 (可多选，点击切换选中状态)
                   </label>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', maxHeight: '110px', overflowY: 'auto', padding: '2px' }}>
-                    {AVAILABLE_SKILLS.map(skill => {
+                    {skillsList.map(skill => {
                       const isSelected = (formData.assignedSkills || []).includes(skill.id);
                       return (
                         <div
@@ -6079,9 +6623,9 @@ ${skill.detailedDesc || skill.desc || ''}`}
         const currentSkills = proj.assignedSkills && proj.assignedSkills.length > 0 ? proj.assignedSkills : getDefaultSkills(proj);
 
         // 候选未添加的专家
-        const unassignedAgents = AVAILABLE_EXPERT_TEAMS.filter(a => !currentAgents.includes(a.id));
+        const unassignedAgents = expertTeamsList.filter(a => a.enabled !== false && !currentAgents.includes(a.id));
         // 候选未添加的技能
-        const unassignedSkills = AVAILABLE_SKILLS.filter(s => !currentSkills.includes(s.id));
+        const unassignedSkills = skillsList.filter(s => s.enabled !== false && !currentSkills.includes(s.id));
 
         return (
           <div style={{
@@ -6557,7 +7101,7 @@ ${skill.detailedDesc || skill.desc || ''}`}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', background: 'rgba(255,255,255,0.03)', padding: '8px 12px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.06)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <span style={{ fontSize: '11.5px', color: '#c084fc', fontWeight: 600 }}>
-                    已勾选: {tempSelectedAgents.size} / {AVAILABLE_EXPERT_TEAMS.length} 组专家智囊团
+                    已勾选: {tempSelectedAgents.size} / {expertTeamsList.filter(a => a.enabled !== false).length} 组活跃专家智囊团
                   </span>
                   <span style={{ fontSize: '10.5px', color: '#64748b' }}>
                     (点击整张卡片即可切换指派状态)
@@ -6566,7 +7110,7 @@ ${skill.detailedDesc || skill.desc || ''}`}
                 <div style={{ display: 'flex', gap: '6px' }}>
                   <button
                     type="button"
-                    onClick={() => setTempSelectedAgents(new Set(AVAILABLE_EXPERT_TEAMS.map(a => a.id)))}
+                    onClick={() => setTempSelectedAgents(new Set(expertTeamsList.filter(a => a.enabled !== false).map(a => a.id)))}
                     style={{ background: 'rgba(168, 85, 247, 0.15)', border: '1px solid rgba(168, 85, 247, 0.3)', color: '#d8b4fe', padding: '3px 9px', borderRadius: '5px', fontSize: '10.5px', cursor: 'pointer' }}
                   >
                     全部勾选
@@ -6598,12 +7142,18 @@ ${skill.detailedDesc || skill.desc || ''}`}
                 paddingRight: '6px',
                 marginBottom: '16px'
               }}>
-                {AVAILABLE_EXPERT_TEAMS.map(agent => {
+                {expertTeamsList.map(agent => {
                   const isChecked = tempSelectedAgents.has(agent.id);
                   return (
                     <div
                       key={agent.id}
-                      onClick={() => toggleAgentInPicker(agent.id)}
+                      onClick={() => {
+                        if (agent.enabled === false) {
+                          notify(`⚠️ 专家团「${agent.name}」已被停用，如需指派请先在技能专家团页面中启用`);
+                          return;
+                        }
+                        toggleAgentInPicker(agent.id);
+                      }}
                       style={{
                         display: 'flex',
                         flexDirection: 'column',
@@ -6768,7 +7318,7 @@ ${skill.detailedDesc || skill.desc || ''}`}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', background: 'rgba(255,255,255,0.03)', padding: '8px 12px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.06)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <span style={{ fontSize: '11.5px', color: '#38bdf8', fontWeight: 600 }}>
-                    已勾选: {tempSelectedSkills.size} / {AVAILABLE_SKILLS.length} 项技能
+                    已勾选: {tempSelectedSkills.size} / {skillsList.filter(s => s.enabled !== false).length} 项活跃技能
                   </span>
                   <span style={{ fontSize: '10.5px', color: '#64748b' }}>
                     (点击整张卡片即可切换挂载状态)
@@ -6777,7 +7327,7 @@ ${skill.detailedDesc || skill.desc || ''}`}
                 <div style={{ display: 'flex', gap: '6px' }}>
                   <button
                     type="button"
-                    onClick={() => setTempSelectedSkills(new Set(AVAILABLE_SKILLS.map(s => s.id)))}
+                    onClick={() => setTempSelectedSkills(new Set(skillsList.filter(s => s.enabled !== false).map(s => s.id)))}
                     style={{ background: 'rgba(56, 189, 248, 0.15)', border: '1px solid rgba(56, 189, 248, 0.3)', color: '#7dd3fc', padding: '3px 9px', borderRadius: '5px', fontSize: '10.5px', cursor: 'pointer' }}
                   >
                     全部勾选
@@ -6809,12 +7359,18 @@ ${skill.detailedDesc || skill.desc || ''}`}
                 paddingRight: '6px',
                 marginBottom: '16px'
               }}>
-                {AVAILABLE_SKILLS.map(skill => {
+                {skillsList.map(skill => {
                   const isChecked = tempSelectedSkills.has(skill.id);
                   return (
                     <div
                       key={skill.id}
-                      onClick={() => toggleSkillInPicker(skill.id)}
+                      onClick={() => {
+                        if (skill.enabled === false) {
+                          notify(`⚠️ 技能「${skill.name}」已被停用，如需指派请先在技能专家团页面中启用`);
+                          return;
+                        }
+                        toggleSkillInPicker(skill.id);
+                      }}
                       style={{
                         display: 'flex',
                         flexDirection: 'column',
