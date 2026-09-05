@@ -147,7 +147,7 @@ function setupChineseApplicationMenu() {
           label: '连接并启动 Antigravity IDE(&I)',
           accelerator: 'CmdOrCtrl+Shift+I',
           click: () => {
-            openInAntigravityIde('C:\\Users\\Administrator\\Desktop\\量化策略源代码');
+            openInAntigravityIde('./workspace');
           }
         },
         { type: 'separator' },
@@ -517,7 +517,7 @@ ipcMain.handle('pm2-batch-start', async (event, { projects, concurrency = 2 }) =
 ipcMain.handle('export-skills-agents-to-ide', async (event, data) => {
   try {
     const { expertTeams = [], skills = [], targetDir } = data || {};
-    const scratchDir = targetDir || 'C:\\Users\\Administrator\\Desktop\\量化策略源代码\\scratch';
+    const scratchDir = targetDir || './workspace\\scratch';
     if (!fs.existsSync(scratchDir)) {
       try { fs.mkdirSync(scratchDir, { recursive: true }); } catch (e) {}
     }
@@ -570,7 +570,7 @@ ipcMain.handle('export-skills-agents-to-ide', async (event, data) => {
 
     // 同时写一份到用户全局配置根目录
     try {
-      const globalConfigDir = 'C:\\Users\\Administrator\\.gemini\\config';
+      const globalConfigDir = path.join(os.homedir(), '.gemini'\\config';
       if (fs.existsSync(globalConfigDir)) {
         fs.writeFileSync(path.join(globalConfigDir, 'ANTIGRAVITY_TEAM_EDITOR.md'), md, 'utf-8');
       }
@@ -657,8 +657,8 @@ ipcMain.handle('ide-conversation-logs', async (event, projectName) => {
       const candidates = [
         path.join(__dirname, 'get_ide_logs.py'),
         path.join(process.cwd(), 'get_ide_logs.py'),
-        'C:\\Users\\Administrator\\Desktop\\量化策略源代码\\scratch\\antigravity-pm\\get_ide_logs.py',
-        'C:\\Users\\Administrator\\Desktop\\Antigravity-PM\\resources\\app\\get_ide_logs.py'
+        './workspace\\scratch\\antigravity-pm\\get_ide_logs.py',
+        './projects\\Antigravity-PM\\resources\\app\\get_ide_logs.py'
       ];
       let scriptPath = candidates.find(p => fs.existsSync(p));
       debugLog(`[ide-conversation-logs] querying logs for ${projectName}, script: ${scriptPath}`);
@@ -764,7 +764,7 @@ ipcMain.handle('system-heal', async () => {
 });
 
 // ================= 🧠 投研知识库与腾讯 ima 直连体系 =================
-const KNOWLEDGE_VAULT_DIR = 'C:\\Users\\Administrator\\Desktop\\量化策略源代码\\knowledge_vault';
+const KNOWLEDGE_VAULT_DIR = './workspace\\knowledge_vault';
 
 // 获取本地智库所有文件结构
 ipcMain.handle('knowledge-get-files', async () => {
@@ -908,7 +908,7 @@ ipcMain.handle('knowledge-create-note', async (event, { categoryName, title, con
 
 // 获取腾讯 ima.copilot 真实云端知识库列表与剪藏条目
 ipcMain.handle('knowledge-ima-get-items', async () => {
-  const imaSkillPath = 'C:\\Users\\Administrator\\.gemini\\config\\skills\\ima-skill\\ima_api.cjs';
+  const imaSkillPath = path.join(os.homedir(), '.gemini'\\config\\skills\\ima-skill\\ima_api.cjs';
   if (!fs.existsSync(imaSkillPath)) {
     return { success: false, error: '未安装 ima-skill 模块' };
   }

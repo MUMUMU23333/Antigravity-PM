@@ -4,9 +4,9 @@ const os = require('os');
 const { execSync } = require('child_process');
 
 // 统一共享数据库路径定义（Antigravity IDE 与 Antigravity PM 直连共用）
-const IDE_SHARED_DIR = 'C:\\Users\\Administrator\\.gemini\\antigravity-ide';
+const IDE_SHARED_DIR = path.join(os.homedir(), '.gemini', 'antigravity-ide');
 const IDE_SHARED_PROJECTS_PATH = path.join(IDE_SHARED_DIR, 'projects.json');
-const GEMINI_SHARED_PROJECTS_PATH = 'C:\\Users\\Administrator\\.gemini\\antigravity\\projects.json';
+const GEMINI_SHARED_PROJECTS_PATH = path.join(os.homedir(), '.gemini', 'antigravity', 'projects.json');
 
 // 原子写入 JSON
 function atomicWriteJsonSync(targetPath, data) {
@@ -54,7 +54,7 @@ function saveSharedProjects(projects, localUserDataDir) {
     } catch (e) {}
   }
 
-  const quantDirNorm = 'C:\\Users\\Administrator\\Desktop\\量化策略源代码'.toLowerCase();
+  const quantDirNorm = path.join(os.homedir(), 'Desktop', 'quant').toLowerCase();
   projects.forEach(item => {
     try {
       if (item.isGitSynced !== false && item.cwd && fs.existsSync(item.cwd)) {
@@ -216,7 +216,7 @@ function getIdeWorkspaces() {
 
 // 提取 Antigravity IDE 脑区 (brain) 中所有的 task.md
 function extractBrainTasks() {
-  const brainDir = 'C:\\Users\\Administrator\\.gemini\\antigravity-ide\\brain';
+  const brainDir = path.join(os.homedir(), '.gemini'\\antigravity-ide\\brain';
   const taskMap = new Map(); // cid -> { title, subtasks }
   if (!fs.existsSync(brainDir)) return taskMap;
 
@@ -402,7 +402,7 @@ function syncWithIde(localUserDataDir, defaultPath) {
   }
 
   // 4. 扫描本地桌面量化策略与生态项目
-  const quantDir = 'C:\\Users\\Administrator\\Desktop\\量化策略源代码';
+  const quantDir = './workspace';
   if (fs.existsSync(quantDir)) {
     try {
       const files = fs.readdirSync(quantDir);

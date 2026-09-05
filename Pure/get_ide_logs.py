@@ -2,7 +2,7 @@ import sqlite3, glob, os, json, sys
 sys.stdout.reconfigure(encoding='utf-8')
 
 def extract_logs(proj_name, limit=50):
-    conv_dir = r'C:\Users\Administrator\.gemini\antigravity-ide\conversations'
+    conv_dir = os.path.join(os.path.expanduser('~'), '.gemini', 'antigravity-ide', 'conversations')
     if not os.path.exists(conv_dir):
         return {'success': True, 'conversations': []}
         

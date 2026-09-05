@@ -470,7 +470,7 @@ export default function App() {
     priority: 'P1',
     category: '趋势跟踪',
     script: 'main.py',
-    cwd: 'C:\\Users\\Administrator\\Desktop\\量化策略源代码',
+    cwd: '',
     interpreter: 'python',
     args: '',
     description: '',
@@ -903,7 +903,7 @@ export default function App() {
       const res = await window.electronAPI.exportSkillsAndAgentsToIde({
         expertTeams: AVAILABLE_EXPERT_TEAMS,
         skills: AVAILABLE_SKILLS,
-        targetDir: 'C:\\Users\\Administrator\\Desktop\\量化策略源代码\\scratch'
+        targetDir: ''
       });
       if (res?.success) {
         notify('✅ 已列出所有专家团和技能！请在 Antigravity IDE 中查看并指导修改');
@@ -1065,7 +1065,7 @@ export default function App() {
       priority: proj.priority || 'P1',
       category: proj.category || '趋势跟踪',
       script: proj.script || 'main.py',
-      cwd: proj.cwd || 'C:\\Users\\Administrator\\Desktop\\量化策略源代码',
+      cwd: proj.cwd || '',
       interpreter: proj.interpreter || 'python',
       args: proj.args || '',
       description: proj.description || '',
@@ -2400,7 +2400,7 @@ export default function App() {
           <button
             type="button"
             className="cx-quick-action-btn"
-            onClick={() => handleOpenInIde({ name: '量化策略根目录', cwd: 'C:\\Users\\Administrator\\Desktop\\量化策略源代码' })}
+            onClick={() => handleOpenInIde({ name: '量化策略根目录', cwd: '' })}
             title="在 Antigravity IDE 中打开主工作区"
           >
             <span style={{ fontSize: '15px' }}>💡</span>
@@ -3552,7 +3552,7 @@ export default function App() {
                 </button>
                 <button
                   className="btn"
-                  onClick={() => handleOpenNoteInIde(knowledgeData.vaultPath || 'C:\\Users\\Administrator\\Desktop\\量化策略源代码\\knowledge_vault')}
+                  onClick={() => handleOpenNoteInIde(knowledgeData.vaultPath || './workspace\\knowledge_vault')}
                   title="在 Antigravity IDE 中打开本地智库目录"
                   style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
                 >

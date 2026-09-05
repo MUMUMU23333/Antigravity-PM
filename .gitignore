@@ -1,26 +1,23 @@
-# Dependencies
-node_modules/
-.pnp
-.pnp.js
-
-# Build temporary
-dist-electron/
-release/
-out/
-build/
-
-# Logs
+# Logs & Temp
 *.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-debug.log
-
-# OS generated
+*.bak
+*.tmp
 .DS_Store
 Thumbs.db
 
-# Environment and IDE
+# Dependencies
+node_modules/
+
+# Local Environment & Secrets
+.env
+.env.local
+.env.*.local
+*.key
+*.pem
+
+# Personal IDE & Cache
 .vscode/
 .idea/
-*.tmp*
+.gemini/
+.system_generated/
+.user_uploaded/
